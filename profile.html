@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deepesh - Profile</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <!-- Video Background -->
+    <video id="bgVideo" class="background-video" autoplay muted loop>
+        <source src="media/samurai.mp4" type="video/mp4">
+    </video>
+    
+    <!-- Magic Cursor Canvas -->
+    <canvas id="cursorCanvas"></canvas>
+    
+    <!-- Media Controls -->
+    <div class="media-controls">
+        <button class="control-btn" id="volumeBtn" title="Volume Control">
+            <span class="icon">🔊</span>
+        </button>
+    </div>
+
+    <!-- Volume Slider -->
+    <div class="volume-slider" id="volumeSlider">
+        <input type="range" id="volumeControl" min="0" max="100" value="50">
+    </div>
+    
+    <div class="container">
+        <!-- Avatar Section -->
+        <div class="avatar-section">
+            <div class="avatar-decoration">
+                <img src="https://cdn.discordapp.com/avatar-decoration-presets/a_ec5207e70ca2ef457c852d6135531d19.png" class="decoration-frame" alt="Decoration">
+                <img id="discordAvatar" class="avatar-img" src="" alt="Avatar">
+            </div>
+            <h1 class="profile-name" id="discordName">Deepesh(CAP彡DIST)</h1>
+            <div class="location" id="location">📍 Mars</div>
+        </div>
+
+        <!-- Dogtag Card -->
+        <div class="dogtag-card">
+            <div class="visitor-badge" id="visitorCount">0</div>
+            <div class="dogtag-content">
+                <div class="dogtag-avatar">
+                    <img id="dogtagAvatar" src="" alt="Avatar">
+                </div>
+                <div class="dogtag-info">
+                    <div class="dogtag-name" id="dogtagName">Deepesh(CAP彡DIST)</div>
+                    <div class="dogtag-username" id="dogtagUsername">@deepeshgiri</div>
+                    <div class="dogtag-status">
+                        <span class="status-dot" id="statusDot">●</span>
+                        <span class="status-text" id="statusText">Online</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Social Links -->
+        <div class="social-links">
+            <a href="https://exophase.com/user/JM2Jim/" class="social-link" data-name="Exophase">
+                <i class="fas fa-trophy" style="color: #FFD700;"></i>
+            </a>
+            <a href="https://xbox.com/play/user/JM2Jim" class="social-link" data-name="Xbox">
+                <i class="fab fa-xbox" style="color: #107C10;"></i>
+            </a>
+            <a href="https://steamcommunity.com/id/JM2Jim" class="social-link" data-name="Steam">
+                <i class="fab fa-steam" style="color: #00adee;"></i>
+            </a>
+            <a href="https://twitch.tv/JM2Jim" class="social-link" data-name="Twitch">
+                <i class="fab fa-twitch" style="color: #9146FF;"></i>
+            </a>
+            <a href="https://t.me/JM2Jim" class="social-link" data-name="Telegram">
+                <i class="fab fa-telegram" style="color: #0088cc;"></i>
+            </a>
+            <a href="https://roblox.com/users/4161785105" class="social-link" data-name="Roblox">
+                <i class="fas fa-cube" style="color: #E4002B;"></i>
+            </a>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-analytics.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyCVjoaJvfVf0UQyQVcyvA-JnGuoHR7oJ7U",
+            authDomain: "fancyportfolio-228dc.firebaseapp.com",
+            projectId: "fancyportfolio-228dc",
+            storageBucket: "fancyportfolio-228dc.firebasestorage.app",
+            messagingSenderId: "967608830050",
+            appId: "1:967608830050:web:facc81a993da4e154d293b",
+            measurementId: "G-BNYXPBR01M"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>
