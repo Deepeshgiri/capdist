@@ -1,4 +1,3 @@
-/* Global Styles */
 * {
     margin: 0;
     padding: 0;
@@ -18,22 +17,6 @@ body {
     padding: 20px;
 }
 
-/* Background Animation */
-.background-animated {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: 
-        radial-gradient(circle at 20% 50%, rgba(138, 43, 226, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(75, 0, 130, 0.1) 0%, transparent 50%);
-    animation: bgShift 15s ease-in-out infinite;
-    pointer-events: none;
-    z-index: 0;
-}
-
-/* Video Background */
 .background-video {
     position: fixed;
     top: 0;
@@ -43,50 +26,21 @@ body {
     object-fit: cover;
     pointer-events: none;
     z-index: 0;
-    opacity: 1;
 }
 
-.background-video::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.3);
-    pointer-events: none;
-}
-
-@keyframes bgShift {
-    0%, 100% {
-        background: 
-            radial-gradient(circle at 20% 50%, rgba(138, 43, 226, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 80% 80%, rgba(75, 0, 130, 0.1) 0%, transparent 50%);
-    }
-    50% {
-        background: 
-            radial-gradient(circle at 80% 50%, rgba(138, 43, 226, 0.15) 0%, transparent 50%),
-            radial-gradient(circle at 20% 80%, rgba(75, 0, 130, 0.15) 0%, transparent 50%);
-    }
-}
-
-/* Container */
 .container {
     position: relative;
     z-index: 10;
     max-width: 500px;
     width: 90%;
-    animation: containerSlideIn 0.8s ease-out;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 30px;
 }
 
-/* Avatar Section */
 .avatar-section {
     text-align: center;
-    animation: fadeIn 0.8s ease;
 }
 
 .avatar-decoration {
@@ -126,6 +80,17 @@ body {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     margin-bottom: 10px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.profile-name:hover {
+    background: rgba(0, 212, 255, 0.2);
+    -webkit-text-fill-color: #00d4ff;
+    text-shadow: 0 0 20px rgba(0, 212, 255, 0.8), 0 0 40px rgba(0, 212, 255, 0.6);
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
 }
 
 .location {
@@ -134,22 +99,20 @@ body {
     margin-top: 10px;
 }
 
-/* Dogtag Card */
 .dogtag-card {
     width: 100%;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 15px;
     padding: 25px;
-    backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(2px) saturate(180%);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 2px rgba(255, 255, 255, 0.1);
     position: relative;
-    animation: slideUp 0.8s ease 0.2s both;
 }
 
 .visitor-badge {
     position: absolute;
-    top: 15px;
+    bottom: 15px;
     right: 15px;
     background: linear-gradient(135deg, #00d4ff, #0099ff);
     color: white;
@@ -190,6 +153,16 @@ body {
     font-weight: bold;
     color: #00d4ff;
     margin-bottom: 5px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.dogtag-name:hover {
+    background: rgba(0, 212, 255, 0.2);
+    text-shadow: 0 0 15px rgba(0, 212, 255, 0.8), 0 0 25px rgba(0, 212, 255, 0.6);
+    border-radius: 8px;
+    padding: 8px;
+    box-shadow: 0 0 25px rgba(0, 212, 255, 0.4);
 }
 
 .dogtag-username {
@@ -215,123 +188,12 @@ body {
     color: rgba(255, 255, 255, 0.8);
 }
 
-@keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-}
-
-@keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
-}
-
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes containerSlideIn {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Header */
-.header {
-    text-align: center;
-    margin-bottom: 30px;
-    animation: headerBounce 1s ease-out;
-}
-
-@keyframes headerBounce {
-    0% {
-        opacity: 0;
-        transform: scale(0.8);
-    }
-    50% {
-        transform: scale(1.05);
-    }
-    100% {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-.header-title {
-    font-size: 3.5rem;
-    font-weight: bold;
-    background: linear-gradient(135deg, #00d4ff, #ff00ff, #00d4ff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
-    animation: titleGlow 3s ease-in-out infinite;
-    line-height: 1.2;
-}
-
-.subtitle-clan {
-    font-size: 1.5rem;
-    display: block;
-    margin-top: 5px;
-}
-
-@keyframes titleGlow {
-    0%, 100% {
-        text-shadow: 0 0 20px rgba(0, 212, 255, 0.5), 0 0 40px rgba(255, 0, 255, 0.3);
-    }
-    50% {
-        text-shadow: 0 0 30px rgba(0, 212, 255, 0.8), 0 0 60px rgba(255, 0, 255, 0.6);
-    }
-}
-
-.header-subtitle {
-    font-size: 1.5rem;
-    opacity: 0.8;
-    margin-top: 10px;
-    animation: subtitleFloat 3s ease-in-out infinite;
-}
-
-@keyframes subtitleFloat {
-    0%, 100% {
-        transform: translateY(0px);
-        opacity: 0.8;
-    }
-    50% {
-        transform: translateY(-10px);
-        opacity: 1;
-    }
-}
-
-/* Social Links */
 .social-links {
     display: flex;
     justify-content: center;
     gap: 15px;
     flex-wrap: wrap;
-    animation: fadeIn 0.8s ease 0.4s both;
     width: 100%;
-}
-
-@keyframes socialLinksSlideIn {
-    from {
-        opacity: 0;
-        transform: translateX(-50px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
 }
 
 .social-link {
@@ -376,21 +238,6 @@ body {
     box-shadow: 0 5px 20px rgba(0, 212, 255, 0.3);
 }
 
-.social-link::after {
-    content: '';
-    position: absolute;
-    top: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 0;
-    height: 0;
-    border-left: 8px solid transparent;
-    border-right: 8px solid transparent;
-    border-top: 8px solid rgba(0, 0, 0, 0.9);
-    opacity: 0;
-    transition: all 0.3s ease;
-}
-
 .social-link:hover {
     background: rgba(0, 212, 255, 0.15);
     border-color: rgba(0, 212, 255, 1);
@@ -406,472 +253,12 @@ body {
 .social-link:hover::before {
     opacity: 1;
     transform: translateX(-50%) scale(1);
-    animation: popIn 0.3s ease;
-}
-
-.social-link:hover::after {
-    opacity: 1;
 }
 
 .social-link.shatter::before {
     animation: shatterFade 0.5s ease forwards;
 }
 
-@keyframes popIn {
-    0% {
-        transform: translateX(-50%) scale(0) rotate(-10deg);
-    }
-    50% {
-        transform: translateX(-50%) scale(1.1) rotate(5deg);
-    }
-    100% {
-        transform: translateX(-50%) scale(1) rotate(0deg);
-    }
-}
-
-@keyframes shatterFade {
-    0% {
-        opacity: 1;
-        transform: translateX(-50%) scale(1);
-    }
-    50% {
-        transform: translateX(-50%) scale(1.2) rotate(10deg);
-        opacity: 0.5;
-    }
-    100% {
-        opacity: 0;
-        transform: translateX(-50%) scale(0.5) rotate(20deg);
-    }
-}
-
-.social-link[data-tooltip]::after {
-    display: none;
-}
-
-/* Profile Card */
-.profile-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
-    padding: 40px;
-    backdrop-filter: blur(20px) saturate(180%);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 2px rgba(255, 255, 255, 0.1);
-    animation: cardSlideIn 0.8s ease-out 0.1s both;
-    position: relative;
-    overflow: hidden;
-}
-
-@keyframes cardSlideIn {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.profile-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.1), transparent);
-    animation: shimmer 3s infinite;
-    pointer-events: none;
-}
-
-@keyframes shimmer {
-    0% {
-        left: -100%;
-    }
-    100% {
-        left: 100%;
-    }
-}
-
-/* Card Header */
-.card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 25px;
-}
-
-.username-section {
-    flex: 1;
-}
-
-.profile-name {
-    font-size: 2rem;
-    font-weight: bold;
-    background: linear-gradient(135deg, #00d4ff, #ff00ff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 10px;
-    animation: nameSlideIn 0.8s ease-out 0.2s both;
-}
-
-@keyframes nameSlideIn {
-    from {
-        opacity: 0;
-        transform: translateX(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-.discord-avatar {
-    width: 80px;
-    height: 80px;
-    position: absolute;
-    right: 40px;
-    top: 40px;
-    animation: avatarFloat 3s ease-in-out infinite;
-}
-
-.discord-avatar img {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    border: 3px solid rgba(0, 212, 255, 0.6);
-    box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
-    transition: transform 0.3s ease;
-}
-
-.discord-avatar:hover img {
-    transform: scale(1.1) rotate(10deg);
-}
-
-@keyframes avatarFloat {
-    0%, 100% {
-        transform: translateY(0px);
-    }
-    50% {
-        transform: translateY(-10px);
-    }
-}
-
-/* Card Content */
-.card-content {
-    margin-bottom: 25px;
-}
-
-.user-tag {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 15px;
-    animation: fadeInUp 0.8s ease-out 0.3s both;
-}
-
-.tag-name {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #00d4ff;
-}
-
-.tag-icon {
-    width: 25px;
-    height: 25px;
-    animation: rotate 4s linear infinite;
-}
-
-@keyframes rotate {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-.user-status {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    animation: fadeInUp 0.8s ease-out 0.4s both;
-}
-
-.status-text {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: #ff00ff;
-}
-
-.status-dot {
-    font-size: 1.2rem;
-    animation: blink 1s ease-in-out infinite;
-}
-
-.activity-section {
-    margin-top: 15px;
-    padding: 15px;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 10px;
-    border: 1px solid rgba(0, 212, 255, 0.2);
-}
-
-.activity-info {
-    display: flex;
-    gap: 15px;
-    align-items: center;
-}
-
-.activity-img {
-    width: 60px;
-    height: 60px;
-    border-radius: 10px;
-    border: 2px solid rgba(0, 212, 255, 0.3);
-}
-
-.activity-text {
-    flex: 1;
-}
-
-.activity-name {
-    font-weight: bold;
-    color: #00d4ff;
-    margin-bottom: 5px;
-}
-
-.activity-details,
-.activity-state {
-    font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.7);
-    margin-bottom: 3px;
-}
-
-/* Stats Section */
-.stats-section {
-    display: flex;
-    justify-content: space-around;
-    gap: 20px;
-    padding: 20px 0;
-    border-top: 1px solid rgba(0, 212, 255, 0.2);
-    border-bottom: 1px solid rgba(0, 212, 255, 0.2);
-    animation: fadeInUp 0.8s ease-out 0.5s both;
-}
-
-.stat-item {
-    text-align: center;
-    flex: 1;
-}
-
-.stat-label {
-    display: block;
-    font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.6);
-    margin-bottom: 5px;
-    text-transform: uppercase;
-}
-
-.stat-value {
-    display: block;
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #00d4ff;
-    animation: countUp 1s ease-out 0.6s both;
-}
-
-.stat-value.active-dot {
-    color: #00ff00;
-    font-size: 2rem;
-    animation: blink 1s ease-in-out infinite;
-}
-
-@keyframes blink {
-    0%, 100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.3;
-    }
-}
-
-@keyframes countUp {
-    from {
-        opacity: 0;
-        transform: scale(0.5);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Particles */
-.particles {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    overflow: hidden;
-    border-radius: 20px;
-}
-
-.particle {
-    position: absolute;
-    width: 4px;
-    height: 4px;
-    background: radial-gradient(circle, rgba(0, 212, 255, 0.8), rgba(0, 212, 255, 0));
-    border-radius: 50%;
-    box-shadow: 0 0 10px rgba(0, 212, 255, 0.6);
-    animation: particleFloat 8s infinite ease-in;
-}
-
-.particle:nth-child(1) {
-    left: 10%;
-    bottom: 10%;
-    animation-delay: 0s;
-}
-
-.particle:nth-child(2) {
-    left: 20%;
-    bottom: 5%;
-    animation-delay: 1s;
-}
-
-.particle:nth-child(3) {
-    left: 50%;
-    bottom: 15%;
-    animation-delay: 2s;
-}
-
-.particle:nth-child(4) {
-    left: 80%;
-    bottom: 10%;
-    animation-delay: 3s;
-}
-
-.particle:nth-child(5) {
-    left: 70%;
-    bottom: 5%;
-    animation-delay: 4s;
-}
-
-@keyframes particleFloat {
-    to {
-        transform: translateY(-100px);
-        opacity: 0;
-    }
-}
-
-/* Claim Banner */
-.claim-banner {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 15px;
-    padding: 20px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-top: 30px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    animation: bannerSlideIn 0.8s ease-out 0.6s both;
-    position: relative;
-    overflow: hidden;
-    backdrop-filter: blur(20px) saturate(180%);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 2px rgba(255, 255, 255, 0.1);
-}
-
-@keyframes bannerSlideIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.claim-banner:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(0, 212, 255, 0.5);
-    transform: translateY(-5px);
-    box-shadow: 0 12px 40px rgba(0, 212, 255, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.15);
-}
-
-.banner-logo {
-    width: 50px;
-    height: 50px;
-    flex-shrink: 0;
-    animation: logoSpin 4s linear infinite;
-}
-
-.claim-banner:hover .banner-logo {
-    animation-duration: 2s;
-}
-
-@keyframes logoSpin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-.banner-text {
-    flex: 1;
-}
-
-.banner-title {
-    display: block;
-    font-weight: bold;
-    color: #00d4ff;
-    margin-bottom: 3px;
-}
-
-.banner-subtitle {
-    display: block;
-    font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.8);
-}
-
-.close-btn {
-    background: rgba(255, 0, 0, 0.3);
-    border: none;
-    color: #ff0000;
-    font-size: 1.5rem;
-    cursor: pointer;
-    width: 35px;
-    height: 35px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    flex-shrink: 0;
-}
-
-.close-btn:hover {
-    background: rgba(255, 0, 0, 0.6);
-    transform: scale(1.1) rotate(90deg);
-}
-
-/* Magic Cursor Canvas */
 #cursorCanvas {
     position: fixed;
     top: 0;
@@ -882,11 +269,10 @@ body {
     z-index: 9999;
 }
 
-/* Volume Slider */
 .volume-slider {
     position: fixed;
-    bottom: 100px;
-    right: 30px;
+    top: 100px;
+    left: 30px;
     background: rgba(15, 12, 41, 0.7);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 10px;
@@ -894,7 +280,7 @@ body {
     backdrop-filter: blur(20px) saturate(180%);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(-10px);
     transition: all 0.3s ease;
     pointer-events: none;
     z-index: 101;
@@ -911,36 +297,14 @@ body {
     cursor: pointer;
 }
 
-/* Media Controls */
 .media-controls {
     position: fixed;
-    bottom: 30px;
-    right: 30px;
+    top: 30px;
+    left: 30px;
     display: flex;
     gap: 15px;
     flex-direction: column;
     z-index: 100;
-    animation: slideInRight 0.5s ease-out;
-}
-
-@keyframes slideInRight {
-    from {
-        opacity: 0;
-        transform: translateX(50px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-@keyframes floatSound {
-    0%, 100% {
-        transform: translateY(0px);
-    }
-    50% {
-        transform: translateY(-10px);
-    }
 }
 
 .control-btn {
@@ -957,7 +321,6 @@ body {
     transition: all 0.3s ease;
     backdrop-filter: blur(20px) saturate(180%);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 2px rgba(255, 255, 255, 0.1);
-    animation: floatSound 3s ease-in-out infinite;
     text-decoration: none;
     color: white;
 }
@@ -977,228 +340,36 @@ body {
 .control-btn:hover .icon {
     transform: scale(1.2);
 }
-
-/* Settings Modal */
-.settings-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 200;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    padding: 20px;
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
 }
 
-.settings-modal.active {
-    display: flex;
-    opacity: 1;
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
 }
 
-.settings-content {
-    background: rgba(15, 12, 41, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
-    padding: 30px;
-    max-width: 500px;
-    width: 100%;
-    max-height: 90vh;
-    overflow-y: auto;
-    backdrop-filter: blur(20px) saturate(180%);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.1);
-    animation: settingsSlideIn 0.3s ease-out;
-}
-
-@keyframes settingsSlideIn {
-    from {
-        opacity: 0;
-        transform: scale(0.9);
-    }
-    to {
+@keyframes shatterFade {
+    0% {
         opacity: 1;
-        transform: scale(1);
+        transform: translateX(-50%) scale(1);
+    }
+    50% {
+        transform: translateX(-50%) scale(1.2) rotate(10deg);
+        opacity: 0.5;
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(-50%) scale(0.5) rotate(20deg);
     }
 }
 
-.settings-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 25px;
-    border-bottom: 2px solid rgba(0, 212, 255, 0.2);
-    padding-bottom: 15px;
-}
-
-.settings-header h2 {
-    font-size: 1.8rem;
-    color: #00d4ff;
-}
-
-.close-settings {
-    background: rgba(255, 0, 0, 0.3);
-    border: none;
-    color: #ff0000;
-    font-size: 1.5rem;
-    cursor: pointer;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    transition: all 0.3s ease;
-}
-
-.close-settings:hover {
-    background: rgba(255, 0, 0, 0.6);
-    transform: scale(1.1) rotate(90deg);
-}
-
-.settings-section {
-    margin-bottom: 25px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid rgba(0, 212, 255, 0.1);
-}
-
-.settings-section:last-child {
-    border-bottom: none;
-}
-
-.settings-section h3 {
-    color: #00d4ff;
-    margin-bottom: 15px;
-    font-size: 1.1rem;
-}
-
-.settings-section label {
-    display: block;
-    margin-bottom: 10px;
-    color: rgba(255, 255, 255, 0.8);
-}
-
-.settings-section input[type="text"] {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 10px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(0, 212, 255, 0.3);
-    border-radius: 8px;
-    color: #ffffff;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-}
-
-.settings-section input[type="text"]:focus {
-    outline: none;
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(0, 212, 255, 0.8);
-    box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
-}
-
-.settings-section input[type="checkbox"] {
-    margin-right: 10px;
-    cursor: pointer;
-    width: 18px;
-    height: 18px;
-}
-
-.settings-section button {
-    background: linear-gradient(135deg, rgba(0, 212, 255, 0.3), rgba(255, 0, 255, 0.3));
-    border: 1px solid rgba(0, 212, 255, 0.5);
-    color: #ffffff;
-    padding: 10px 20px;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-right: 10px;
-    margin-bottom: 10px;
-    transition: all 0.3s ease;
-    font-weight: 600;
-}
-
-.settings-section button:hover {
-    background: linear-gradient(135deg, rgba(0, 212, 255, 0.6), rgba(255, 0, 255, 0.6));
-    border-color: rgba(0, 212, 255, 1);
-    box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
-}
-
-.mode-options {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 10px;
-}
-
-.mode-btn {
-    padding: 12px 15px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 2px solid rgba(0, 212, 255, 0.3);
-    color: rgba(255, 255, 255, 0.7);
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 600;
-}
-
-.mode-btn.active {
-    background: rgba(0, 212, 255, 0.3);
-    border-color: rgba(0, 212, 255, 1);
-    color: #00d4ff;
-    box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
-}
-
-.mode-btn:hover {
-    background: rgba(0, 212, 255, 0.2);
-    border-color: rgba(0, 212, 255, 0.8);
-}
-
-.music-controls {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.music-controls button {
-    flex: 1;
-    min-width: 80px;
-}
-
-.music-controls input[type="range"] {
-    width: 100%;
-    cursor: pointer;
-}
-
-/* Responsive Design */
 @media (max-width: 768px) {
     .container {
         max-width: 100%;
         width: 95%;
         padding: 10px;
-    }
-
-    .header-title {
-        font-size: 2rem;
-    }
-    
-    .subtitle-clan {
-        font-size: 1rem;
-    }
-
-    .header-subtitle {
-        font-size: 1rem;
-    }
-
-    .profile-card {
-        padding: 20px;
-    }
-
-    .discord-avatar {
-        width: 60px;
-        height: 60px;
-        right: 20px;
-        top: 20px;
     }
 
     .profile-name {
@@ -1214,18 +385,10 @@ body {
         height: 50px;
         font-size: 1.5rem;
     }
-    
-    .social-link i {
-        font-size: 1.3rem;
-    }
-
-    .stat-value {
-        font-size: 1.2rem;
-    }
 
     .media-controls {
-        bottom: 20px;
-        right: 20px;
+        top: 20px;
+        left: 20px;
     }
 
     .control-btn {
@@ -1235,35 +398,14 @@ body {
     }
     
     .volume-slider {
-        bottom: 80px;
-        right: 20px;
+        top: 80px;
+        left: 20px;
     }
 }
 
 @media (max-width: 480px) {
-    .header-title {
-        font-size: 1.5rem;
-    }
-    
-    .subtitle-clan {
-        font-size: 0.9rem;
-    }
-
-    .header-subtitle {
-        font-size: 0.9rem;
-    }
-
-    .profile-card {
-        padding: 15px;
-    }
-
     .profile-name {
         font-size: 1.2rem;
-    }
-
-    .discord-avatar {
-        width: 50px;
-        height: 50px;
     }
 
     .social-link {
