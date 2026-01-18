@@ -36,7 +36,8 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 30px;
+    gap: 15px;
+    transform: translateY(-20px);
 }
 
 .avatar-section {
@@ -45,9 +46,9 @@ body {
 
 .avatar-decoration {
     position: relative;
-    width: 200px;
-    height: 200px;
-    margin: 0 auto 20px;
+    width: 160px;
+    height: 160px;
+    margin: 0 auto 15px;
 }
 
 .decoration-frame {
@@ -104,7 +105,7 @@ body {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 15px;
-    padding: 25px;
+    padding: 20px;
     backdrop-filter: blur(2px) saturate(180%);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 2px rgba(255, 255, 255, 0.1);
     position: relative;
@@ -197,8 +198,8 @@ body {
 }
 
 .social-link {
-    width: 60px;
-    height: 60px;
+    width: 54px;
+    height: 54px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -215,8 +216,18 @@ body {
 }
 
 .social-link i {
+    font-size: 30px;
     transition: all 0.3s ease;
-    filter: drop-shadow(0 0 5px currentColor);
+}
+
+.social-link[data-name="Instagram"] i { color: #E4405F; }
+.social-link[data-name="LinkedIn"] i { color: #0A66C2; }
+.social-link[data-name="Facebook"] i { color: #1877F2; }
+.social-link[data-name="GitHub"] i { color: #181717; }
+.social-link[data-name="YouTube"] i { color: #FF0000; }
+
+.social-link:hover i {
+    transform: scale(1.3);
 }
 
 .social-link::before {
@@ -245,10 +256,7 @@ body {
     box-shadow: 0 15px 40px rgba(0, 212, 255, 0.5), 0 0 30px rgba(0, 212, 255, 0.3);
 }
 
-.social-link:hover i {
-    filter: drop-shadow(0 0 15px currentColor) drop-shadow(0 0 25px currentColor);
-    transform: scale(1.1);
-}
+
 
 .social-link:hover::before {
     opacity: 1;
@@ -370,6 +378,18 @@ body {
         max-width: 100%;
         width: 95%;
         padding: 10px;
+        gap: 12px;
+        transform: translateY(-15px);
+    }
+
+    .avatar-decoration {
+        width: 140px;
+        height: 140px;
+        margin: 0 auto 10px;
+    }
+
+    .dogtag-card {
+        padding: 15px;
     }
 
     .profile-name {
@@ -381,9 +401,14 @@ body {
     }
 
     .social-link {
-        width: 50px;
-        height: 50px;
+        width: 45px;
+        height: 45px;
         font-size: 1.5rem;
+    }
+
+    .social-link svg {
+        width: 28px;
+        height: 28px;
     }
 
     .media-controls {
@@ -404,14 +429,50 @@ body {
 }
 
 @media (max-width: 480px) {
+    .container {
+        gap: 10px;
+        transform: translateY(-10px);
+    }
+
+    .avatar-decoration {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 8px;
+    }
+
+    .dogtag-card {
+        padding: 12px;
+    }
+
     .profile-name {
         font-size: 1.2rem;
     }
 
     .social-link {
+        width: 40px;
+        height: 40px;
+    }
+
+    .social-link svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    .control-btn {
         width: 45px;
         height: 45px;
-        font-size: 1.3rem;
+        font-size: 1.1rem;
+    }
+    
+    .volume-slider input[type="range"] {
+        width: 100px;
+    }
+}    font-size: 1.3rem;
+    }
+
+    .social-link svg {
+        width: 24px;
+        height: 24px;
     }
 
     .control-btn {
