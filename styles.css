@@ -467,13 +467,9 @@ body {
     .volume-slider input[type="range"] {
         width: 100px;
     }
-}    font-size: 1.3rem;
-    }
+}   
 
-    .social-link svg {
-        width: 24px;
-        height: 24px;
-    }
+    
 
     .control-btn {
         width: 45px;
@@ -484,4 +480,4 @@ body {
     .volume-slider input[type="range"] {
         width: 100px;
     }
-}
+
