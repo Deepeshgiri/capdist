@@ -2,114 +2,175 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Deepesh - Profile</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css">
 </head>
 <body>
-    <!-- Video Background -->
-    <video id="bgVideo" class="background-video" autoplay muted loop>
-        <source src="media/samurai.mp4" type="video/mp4">
-    </video>
-    
-    <!-- Magic Cursor Canvas -->
+
     <canvas id="cursorCanvas"></canvas>
-    
-    <!-- Media Controls -->
+
     <div class="media-controls">
-        <button class="control-btn" id="volumeBtn" title="Volume Control">
+        <button class="control-btn" id="volumeBtn" title="Volume">
             <span class="icon">🔊</span>
         </button>
     </div>
-
-    <!-- Volume Slider -->
     <div class="volume-slider" id="volumeSlider">
         <input type="range" id="volumeControl" min="0" max="100" value="50">
     </div>
-    
-    <div class="container dogtag-card">
-        <!-- Avatar Section -->
-        <div class="avatar-section">
-            <div class="avatar-decoration">
-                <img src="https://cdn.discordapp.com/avatar-decoration-presets/a_ec5207e70ca2ef457c852d6135531d19.png" class="decoration-frame" alt="Decoration">
-                <img id="discordAvatar" class="avatar-img" src="" alt="Avatar">
-            </div>
-            <h1 class="profile-name" id="discordName">Deepesh  </h1>
-            <div class="location" id="location">📍 Mars</div>
-        </div>
 
-        <!-- Dogtag Card -->
-        <div class="dogtag-card">
-            <div class="visitor-badge" id="visitorCount">0</div>
-            <div class="dogtag-content">
-                <div class="dogtag-avatar">
-                    <img id="dogtagAvatar" src="" alt="Avatar">
-                </div>
-                <div class="dogtag-info">
-                    <div class="dogtag-name" id="dogtagName">Deepesh <br>(CAP彡DIST)</div>
-                    <div class="dogtag-username" id="dogtagUsername">@deepeshgiri</div>
-                    <div class="dogtag-status">
-                        <span class="status-dot" id="statusDot">●</span>
-                        <span class="status-text" id="statusText">Online</span>
+    <!-- Per-slide background music -->
+    <audio id="music1" loop src="media/music1.mp3"></audio>
+    <audio id="music2" loop src="media/music2.mp3"></audio>
+    <audio id="music3" loop src="media/music3.mp3"></audio>
+
+    <div class="swiper-container">
+        <div class="swiper-wrapper">
+
+            <!-- ── Slide 1: Cyberpunk ── -->
+            <div class="swiper-slide theme-1">
+                <video class="slide-video" autoplay muted loop playsinline>
+                    <source src="media/samurai.mp4" type="video/mp4">
+                </video>
+                <div class="slide-overlay"></div>
+                <span class="theme-label">Cyberpunk</span>
+                <div class="container">
+                    <div class="avatar-section">
+                        <div class="avatar-decoration">
+                            <img src="https://cdn.discordapp.com/avatar-decoration-presets/a_ec5207e70ca2ef457c852d6135531d19.png" class="decoration-frame" alt="">
+                            <img id="discordAvatar" class="avatar-img" src="" alt="Avatar">
+                        </div>
+                        <h1 class="profile-name" id="discordName">Deepesh</h1>
+                        <div class="location" id="location">📍 Mars</div>
+                    </div>
+                    <div class="dogtag-card">
+                        <div class="visitor-badge" id="visitorCount">0</div>
+                        <div class="dogtag-content">
+                            <div class="dogtag-avatar"><img id="dogtagAvatar" src="" alt=""></div>
+                            <div class="dogtag-info">
+                                <div class="dogtag-name" id="dogtagName">Deepesh<br><small>(CAP彡DIST)</small></div>
+                                <div class="dogtag-username" id="dogtagUsername">@deepeshgiri</div>
+                                <div class="dogtag-status">
+                                    <span class="status-dot" id="statusDot">●</span>
+                                    <span class="status-text" id="statusText">Online</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="social-links">
+                        <a href="https://www.instagram.com/_deepesh_giri/" class="social-link" data-name="Instagram" target="_blank"><i class="fab fa-instagram"></i></a>
+                        <a href="https://www.linkedin.com/in/deepesh-giri/" class="social-link" data-name="LinkedIn" target="_blank"><i class="fab fa-linkedin"></i></a>
+                        <a href="https://www.facebook.com/pandit.deepesh.giri/" class="social-link" data-name="Facebook" target="_blank"><i class="fab fa-facebook"></i></a>
+                        <a href="https://github.com/Deepeshgiri" class="social-link" data-name="GitHub" target="_blank"><i class="fab fa-github"></i></a>
+                        <a href="https://www.youtube.com/@learnmore4318" class="social-link" data-name="YouTube" target="_blank"><i class="fab fa-youtube"></i></a>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Social Links -->
-        <div class="social-links">
-            <!-- <a href="https://exophase.com/user/JM2Jim/" class="social-link" data-name="Exophase">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="#FFD700">
-                    <path d="M12 2L15.09 8.26L22 9L17 14L18.18 21L12 17.77L5.82 21L7 14L2 9L8.91 8.26L12 2Z"/>
-                </svg>
-            </a> -->
-            <!-- <a href="https://xbox.com/play/user/JM2Jim" class="social-link" data-name="Xbox">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="#107C10">
-                    <path d="M4.102 21.033A11.955 11.955 0 0012 24c2.998 0 5.765-1.094 7.898-2.967l-.256-.256s-1.685-1.685-3.22-3.22c-.653.61-1.507 1.005-2.422 1.005-1.979 0-3.585-1.606-3.585-3.585 0-.915.395-1.769 1.005-2.422L7.2 8.335s-3.22-3.22-3.22-3.22L3.724 5.37A11.955 11.955 0 000 12c0 3.234 1.278 6.172 3.356 8.322l.746.711zm15.796-2.711A11.955 11.955 0 0024 12c0-3.234-1.278-6.172-3.356-8.322l-.746-.711A11.955 11.955 0 0012 0C9.002 0 6.235 1.094 4.102 2.967l.256.256s1.685 1.685 3.22 3.22c.653-.61 1.507-1.005 2.422-1.005 1.979 0 3.585 1.606 3.585 3.585 0 .915-.395 1.769-1.005 2.422l4.22 4.22s3.22 3.22 3.22 3.22l.256.256z"/>
-                </svg>
-            </a> -->
-            <!-- <a href="https://steamcommunity.com/id/JM2Jim" class="social-link" data-name="Steam">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="#00adee">
-                    <path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.624 0 11.999-5.375 11.999-12S18.603.001 11.979.001zM7.54 18.21l-1.473-.61c.262.543.714.999 1.314 1.25 1.297.539 2.793-.076 3.332-1.375.263-.63.264-1.319.005-1.949s-.75-1.121-1.377-1.383c-.624-.26-1.29-.249-1.878-.03l1.523.63c.956.4 1.409 1.5 1.009 2.456-.397.957-1.497 1.41-2.454 1.01H7.54v.001zm9.399-3.199c0 1.663-1.346 3.01-3.008 3.01-1.664 0-3.011-1.347-3.011-3.01 0-1.665 1.347-3.007 3.011-3.007 1.663-.001 3.008 1.342 3.008 3.007zm-5.267-.007c0 1.249 1.014 2.259 2.259 2.259 1.249 0 2.259-1.01 2.259-2.259 0-1.25-1.01-2.26-2.259-2.26-1.245 0-2.259 1.01-2.259 2.26z"/>
-                </svg>
-            </a> -->
-            <a href="https://www.instagram.com/_deepesh_giri/" class="social-link" data-name="Instagram">
-                <i class="fab fa-instagram"></i>
-            </a>
-            <a href="https://www.linkedin.com/in/deepesh-giri/" class="social-link" data-name="LinkedIn">
-                <i class="fab fa-linkedin"></i>
-            </a>
-            <a href="https://www.facebook.com/pandit.deepesh.giri/" class="social-link" data-name="Facebook">
-                <i class="fab fa-facebook"></i>
-            </a>
-            <a href="https://github.com/Deepeshgiri" class="social-link" data-name="GitHub">
-                <i class="fab fa-github"></i>
-            </a>
-            <a href="https://www.youtube.com/@learnmore4318" class="social-link" data-name="YouTube">
-                <i class="fab fa-youtube"></i>
-                
-            </a>
+            <!-- ── Slide 2: Synthwave ── -->
+            <div class="swiper-slide theme-2">
+                <video class="slide-video" autoplay muted loop playsinline>
+                    <!-- Replace with your synthwave video -->
+                    <source src="media/synthwave.mp4" type="video/mp4">
+                </video>
+                <div class="slide-overlay"></div>
+                <span class="theme-label">Synthwave</span>
+                <div class="container">
+                    <div class="avatar-section">
+                        <div class="avatar-decoration">
+                            <img src="https://cdn.discordapp.com/avatar-decoration-presets/a_ec5207e70ca2ef457c852d6135531d19.png" class="decoration-frame" alt="">
+                            <img id="discordAvatar2" class="avatar-img" src="" alt="Avatar">
+                        </div>
+                        <h1 class="profile-name" id="discordName2">Deepesh</h1>
+                        <div class="location" id="location2">📍 Mars</div>
+                    </div>
+                    <div class="dogtag-card">
+                        <div class="visitor-badge" id="visitorCount2">0</div>
+                        <div class="dogtag-content">
+                            <div class="dogtag-avatar"><img id="dogtagAvatar2" src="" alt=""></div>
+                            <div class="dogtag-info">
+                                <div class="dogtag-name" id="dogtagName2">Deepesh<br><small>(CAP彡DIST)</small></div>
+                                <div class="dogtag-username" id="dogtagUsername2">@deepeshgiri</div>
+                                <div class="dogtag-status">
+                                    <span class="status-dot" id="statusDot2">●</span>
+                                    <span class="status-text" id="statusText2">Online</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="social-links">
+                        <a href="https://www.instagram.com/_deepesh_giri/" class="social-link" data-name="Instagram" target="_blank"><i class="fab fa-instagram"></i></a>
+                        <a href="https://www.linkedin.com/in/deepesh-giri/" class="social-link" data-name="LinkedIn" target="_blank"><i class="fab fa-linkedin"></i></a>
+                        <a href="https://www.facebook.com/pandit.deepesh.giri/" class="social-link" data-name="Facebook" target="_blank"><i class="fab fa-facebook"></i></a>
+                        <a href="https://github.com/Deepeshgiri" class="social-link" data-name="GitHub" target="_blank"><i class="fab fa-github"></i></a>
+                        <a href="https://www.youtube.com/@learnmore4318" class="social-link" data-name="YouTube" target="_blank"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Slide 3: Forest ── -->
+            <div class="swiper-slide theme-3">
+                <video class="slide-video" autoplay muted loop playsinline>
+                    <!-- Replace with your forest video -->
+                    <source src="media/forest.mp4" type="video/mp4">
+                </video>
+                <div class="slide-overlay"></div>
+                <span class="theme-label">Forest</span>
+                <div class="container">
+                    <div class="avatar-section">
+                        <div class="avatar-decoration">
+                            <img src="https://cdn.discordapp.com/avatar-decoration-presets/a_ec5207e70ca2ef457c852d6135531d19.png" class="decoration-frame" alt="">
+                            <img id="discordAvatar3" class="avatar-img" src="" alt="Avatar">
+                        </div>
+                        <h1 class="profile-name" id="discordName3">Deepesh</h1>
+                        <div class="location" id="location3">📍 Mars</div>
+                    </div>
+                    <div class="dogtag-card">
+                        <div class="visitor-badge" id="visitorCount3">0</div>
+                        <div class="dogtag-content">
+                            <div class="dogtag-avatar"><img id="dogtagAvatar3" src="" alt=""></div>
+                            <div class="dogtag-info">
+                                <div class="dogtag-name" id="dogtagName3">Deepesh<br><small>(CAP彡DIST)</small></div>
+                                <div class="dogtag-username" id="dogtagUsername3">@deepeshgiri</div>
+                                <div class="dogtag-status">
+                                    <span class="status-dot" id="statusDot3">●</span>
+                                    <span class="status-text" id="statusText3">Online</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="social-links">
+                        <a href="https://www.instagram.com/_deepesh_giri/" class="social-link" data-name="Instagram" target="_blank"><i class="fab fa-instagram"></i></a>
+                        <a href="https://www.linkedin.com/in/deepesh-giri/" class="social-link" data-name="LinkedIn" target="_blank"><i class="fab fa-linkedin"></i></a>
+                        <a href="https://www.facebook.com/pandit.deepesh.giri/" class="social-link" data-name="Facebook" target="_blank"><i class="fab fa-facebook"></i></a>
+                        <a href="https://github.com/Deepeshgiri" class="social-link" data-name="GitHub" target="_blank"><i class="fab fa-github"></i></a>
+                        <a href="https://www.youtube.com/@learnmore4318" class="social-link" data-name="YouTube" target="_blank"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+            </div>
+
         </div>
+        <div class="swiper-pagination"></div>
+        <div class="swiper-button-next"></div>
+        <div class="swiper-button-prev"></div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-analytics.js";
-        
-        const firebaseConfig = {
-           
-            authDomain: "fancyportfolio-228dc.firebaseapp.com",
-            projectId: "fancyportfolio-228dc",
-            storageBucket: "fancyportfolio-228dc.firebasestorage.app",
+        import { getAnalytics }  from "https://www.gstatic.com/firebasejs/12.8.0/firebase-analytics.js";
+        const app = initializeApp({
+            authDomain:        "fancyportfolio-228dc.firebaseapp.com",
+            projectId:         "fancyportfolio-228dc",
+            storageBucket:     "fancyportfolio-228dc.firebasestorage.app",
             messagingSenderId: "967608830050",
-            appId: "1:967608830050:web:facc81a993da4e154d293b",
-            measurementId: "G-BNYXPBR01M"
-        };
-        
-        const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
+            appId:             "1:967608830050:web:facc81a993da4e154d293b",
+            measurementId:     "G-BNYXPBR01M"
+        });
+        getAnalytics(app);
     </script>
+    <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
