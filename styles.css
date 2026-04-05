@@ -893,6 +893,10 @@ body {
 .swiper-slide-active .social-link:nth-child(4) { animation: revealUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.4s both; }
 .swiper-slide-active .social-link:nth-child(5) { animation: revealUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.46s both; }
 
+.swiper-slide:not(.swiper-slide-active) * {
+    animation-play-state: paused !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .profile-name,
     .theme-label,
@@ -998,4 +1002,33 @@ body {
     .cap-container::-webkit-scrollbar { width: 0; height: 0; }
 
     .dogtag-card.slide-glass-dogtag { margin-top: 10px; }
+}
+
+/* â”€â”€â”€ Performance mode (auto-enabled) â”€â”€â”€ */
+html[data-perf="low"] #cursorCanvas { display: none; }
+
+html[data-perf="low"] .glass-border-travel__trail,
+html[data-perf="low"] .glass-border-travel__glowline,
+html[data-perf="low"] .glass-border-travel__stroke,
+html[data-perf="low"] .theme-label,
+html[data-perf="low"] .profile-name,
+html[data-perf="low"] .swiper-button-next,
+html[data-perf="low"] .swiper-button-prev {
+    animation: none !important;
+}
+
+html[data-perf="low"] .slide-glass-shell,
+html[data-perf="low"] .dogtag-card.slide-glass-dogtag,
+html[data-perf="low"] .control-btn,
+html[data-perf="low"] .volume-slider {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+html[data-perf="low"] .glass-border-travel,
+html[data-perf="low"] .theme-label,
+html[data-perf="low"] .profile-name,
+html[data-perf="low"] .swiper-button-next,
+html[data-perf="low"] .swiper-button-prev {
+    filter: none !important;
 }

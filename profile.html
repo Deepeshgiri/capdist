@@ -35,8 +35,8 @@
 
             <!-- ── Slide 1: Cyberpunk ── -->
             <div class="swiper-slide theme-1">
-                <video class="slide-video" autoplay muted loop playsinline>
-                    <source src="media/samurai.mp4" type="video/mp4">
+                <video class="slide-video" muted loop playsinline preload="none">
+                    <source data-src="media/samurai.mp4" type="video/mp4">
                 </video>
                 <div class="slide-overlay"></div>
                 <span class="theme-label">Cyberpunk</span>
@@ -125,9 +125,9 @@
 
             <!-- ── Slide 2: Synthwave ── -->
             <div class="swiper-slide theme-2">
-                <video class="slide-video" autoplay muted loop playsinline>
+                <video class="slide-video" muted loop playsinline preload="none">
                     <!-- Replace with your synthwave video -->
-                    <source src="media/synthwave.mp4" type="video/mp4">
+                    <source data-src="media/synthwave.mp4" type="video/mp4">
                 </video>
                 <div class="slide-overlay"></div>
                 <span class="theme-label">Synthwave</span>
@@ -216,9 +216,9 @@
 
             <!-- ── Slide 3: Forest ── -->
             <div class="swiper-slide theme-3">
-                <video class="slide-video" autoplay muted loop playsinline>
+                <video class="slide-video" muted loop playsinline preload="none">
                     <!-- Replace with your forest video -->
-                    <source src="media/forest.mp4" type="video/mp4">
+                    <source data-src="media/forest.mp4" type="video/mp4">
                 </video>
                 <div class="slide-overlay"></div>
                 <span class="theme-label">Forest</span>
@@ -311,19 +311,7 @@
         <div class="swiper-button-prev"></div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-        import { getAnalytics }  from "https://www.gstatic.com/firebasejs/12.8.0/firebase-analytics.js";
-        const app = initializeApp({
-            authDomain:        "fancyportfolio-228dc.firebaseapp.com",
-            projectId:         "fancyportfolio-228dc",
-            storageBucket:     "fancyportfolio-228dc.firebasestorage.app",
-            messagingSenderId: "967608830050",
-            appId:             "1:967608830050:web:facc81a993da4e154d293b",
-            measurementId:     "G-BNYXPBR01M"
-        });
-        getAnalytics(app);
-    </script>
+    
     <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
     <script src="script.js"></script>
 </body>

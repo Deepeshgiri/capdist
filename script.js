@@ -15,26 +15,126 @@ const planets = ['🪐 Saturn', '🌍 Earth', '🔴 Mars', '🌙 Moon', '⭐ And
 
 const tracks = [null, null, null]; // populated after DOM ready
 let currentTrack = null;
+let perfProfile = { low: false, reasons: [] };
+
+function detectPerfProfile() {
+    const reasons = [];
+
+    try {
+        if (navigator.connection && navigator.connection.saveData) reasons.push('save-data');
+    } catch {}
+
+    try {
+        const deviceMemory = navigator.deviceMemory;
+        if (typeof deviceMemory === 'number' && deviceMemory > 0 && deviceMemory <= 4) reasons.push('low-memory');
+    } catch {}
+
+    try {
+        const cores = navigator.hardwareConcurrency;
+        if (typeof cores === 'number' && cores > 0 && cores <= 4) reasons.push('low-cores');
+    } catch {}
+
+    try {
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reducedMotion) reasons.push('reduced-motion');
+    } catch {}
+
+    try {
+        const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
+        if (coarsePointer) reasons.push('coarse-pointer');
+    } catch {}
+
+    return { low: reasons.length > 0, reasons };
+}
+
+function applyPerfMode() {
+    perfProfile = detectPerfProfile();
+    const root = document.documentElement;
+    if (perfProfile.low) root.dataset.perf = 'low';
+    else delete root.dataset.perf;
+}
+
+function ensureLazyVideoLoaded(video) {
+    if (!video) return;
+    const sources = video.querySelectorAll('source[data-src]');
+    if (!sources.length) return;
+
+    let changed = false;
+    sources.forEach(s => {
+        const hasSrc = s.getAttribute('src');
+        if (!hasSrc) {
+            s.setAttribute('src', s.dataset.src || '');
+            changed = true;
+        }
+    });
+    if (changed) {
+        try { video.load(); } catch {}
+    }
+}
+
+function unloadLazyVideo(video) {
+    if (!video) return;
+    const sources = video.querySelectorAll('source[data-src]');
+    if (!sources.length) return;
+
+    let changed = false;
+    sources.forEach(s => {
+        if (s.getAttribute('src')) {
+            s.removeAttribute('src');
+            changed = true;
+        }
+    });
+    if (changed) {
+        try { video.load(); } catch {}
+    }
+}
 
 document.addEventListener('DOMContentLoaded', () => {
+    applyPerfMode();
+
     tracks[0] = document.getElementById('music1');
     tracks[1] = document.getElementById('music2');
     tracks[2] = document.getElementById('music3');
 
-    initAudioContext();
     setupVolumeControl();
     setupMagicCursor();
-    initVideo();
     setupSocialLinks();
     fetchLanyardData();
     refreshMetaStats();
     trackVisitor();
     setRandomLocation();
-    playSound('notification');
     initSwiper();
-    setInterval(fetchLanyardData, 30000);
-    setInterval(refreshMetaStats, 600000);
+
+    let lanyardTimer = null;
+    let metaTimer = null;
+    const startTimers = () => {
+        if (lanyardTimer == null) lanyardTimer = setInterval(fetchLanyardData, 30000);
+        if (metaTimer == null) metaTimer = setInterval(refreshMetaStats, 600000);
+    };
+    const stopTimers = () => {
+        if (lanyardTimer != null) { clearInterval(lanyardTimer); lanyardTimer = null; }
+        if (metaTimer != null) { clearInterval(metaTimer); metaTimer = null; }
+    };
+
+    startTimers();
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) stopTimers();
+        else {
+            fetchLanyardData();
+            refreshMetaStats();
+            startTimers();
+        }
+    });
 });
+
+function ensureAudioContext() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioContext.state === 'suspended') {
+        audioContext.resume().catch(() => {});
+    }
+}
 
 function syncSwiperNavTheme(swiper) {
     const el = document.querySelector('.swiper-container');
@@ -43,9 +143,26 @@ function syncSwiperNavTheme(swiper) {
     el.dataset.navTheme = String((i >= 0 && i < 3 ? i : 0) + 1);
 }
 
+function syncActiveSlideVideo(swiper) {
+    const videos = document.querySelectorAll('.slide-video');
+    videos.forEach(v => {
+        try { v.pause(); } catch {}
+        if (perfProfile.low) unloadLazyVideo(v);
+    });
+
+    const activeSlide = swiper && swiper.slides && swiper.slides[swiper.activeIndex];
+    const activeVideo = activeSlide && activeSlide.querySelector && activeSlide.querySelector('.slide-video');
+    if (activeVideo) {
+        ensureLazyVideoLoaded(activeVideo);
+        activeVideo.play().catch(() => {
+            document.addEventListener('click', () => activeVideo.play().catch(() => {}), { once: true });
+        });
+    }
+}
+
 function initSwiper() {
     const swiper = new Swiper('.swiper-container', {
-        loop: true,
+        loop: !perfProfile.low,
         speed: 600,
         grabCursor: true,
         centeredSlides: true,
@@ -55,9 +172,11 @@ function initSwiper() {
     });
 
     syncSwiperNavTheme(swiper);
+    syncActiveSlideVideo(swiper);
     swiper.on('slideChange', () => {
         syncSwiperNavTheme(swiper);
         switchTrack(swiper.realIndex);
+        syncActiveSlideVideo(swiper);
     });
 
     // Play music for the first slide on first user interaction
@@ -299,18 +418,6 @@ function trackVisitor() {
     });
 }
 
-function initVideo() {
-    document.querySelectorAll('.slide-video').forEach(video => {
-        video.play().catch(() => {
-            document.addEventListener('click', () => video.play(), { once: true });
-        });
-    });
-}
-
-function initAudioContext() {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-}
-
 function setupVolumeControl() {
     const volumeBtn = document.getElementById('volumeBtn');
     const volumeSlider = document.getElementById('volumeSlider');
@@ -344,7 +451,8 @@ const sounds = {
 };
 
 function playSound(soundName) {
-    if (soundVolume === 0 || !audioContext) return;
+    if (soundVolume === 0) return;
+    ensureAudioContext();
     const sound = sounds[soundName];
     if (!sound) return;
     if (Array.isArray(sound.frequency)) {
@@ -384,6 +492,11 @@ function setupMagicCursor() {
     const canvas = document.getElementById('cursorCanvas');
     if (!canvas) return;
 
+    if (perfProfile.low) {
+        canvas.style.display = 'none';
+        return;
+    }
+
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const finePointer = window.matchMedia('(pointer: fine)').matches;
 
@@ -404,45 +517,56 @@ function setupMagicCursor() {
     };
 
     resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
+    let resizeRaf = null;
+    window.addEventListener('resize', () => {
+        if (resizeRaf != null) return;
+        resizeRaf = requestAnimationFrame(() => {
+            resizeRaf = null;
+            resizeCanvas();
+        });
+    }, { passive: true });
 
     const stars = [];
+    const MAX_STARS = 80;
 
     class Star {
         constructor(x, y) {
             this.x = x; this.y = y;
-            this.size = Math.random() * 3 + 2;
-            this.speedX = (Math.random() - 0.5) * 2;
-            this.speedY = (Math.random() - 0.5) * 2;
+            this.size = Math.random() * 2.5 + 1.5;
+            this.speedX = (Math.random() - 0.5) * 1.6;
+            this.speedY = (Math.random() - 0.5) * 1.6;
             this.life = 1;
-            this.decay = Math.random() * 0.02 + 0.01;
+            this.decay = Math.random() * 0.04 + 0.02;
             this.color = `hsl(${Math.random() * 60 + 180}, 100%, ${Math.random() * 30 + 60}%)`;
         }
         update() { this.x += this.speedX; this.y += this.speedY; this.life -= this.decay; this.size *= 0.98; }
         draw() {
-            ctx.save();
             ctx.globalAlpha = this.life;
             ctx.fillStyle = this.color;
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = this.color;
             ctx.beginPath();
-            for (let i = 0; i < 5; i++) {
-                const angle = (Math.PI * 2 * i) / 5 - Math.PI / 2;
-                const x = this.x + Math.cos(angle) * this.size;
-                const y = this.y + Math.sin(angle) * this.size;
-                if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-                const ia = angle + Math.PI / 5;
-                ctx.lineTo(this.x + Math.cos(ia) * (this.size * 0.4), this.y + Math.sin(ia) * (this.size * 0.4));
-            }
-            ctx.closePath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
             ctx.fill();
-            ctx.restore();
         }
     }
 
-    document.addEventListener('mousemove', (e) => {
-        for (let i = 0; i < 3; i++) stars.push(new Star(e.clientX, e.clientY));
-    });
+    let pointerRaf = null;
+    let lastPointer = null;
+
+    function spawnStars(x, y) {
+        stars.push(new Star(x, y));
+        while (stars.length > MAX_STARS) stars.shift();
+    }
+
+    document.addEventListener('pointermove', (e) => {
+        lastPointer = { x: e.clientX, y: e.clientY };
+        if (pointerRaf != null) return;
+        pointerRaf = requestAnimationFrame(() => {
+            pointerRaf = null;
+            if (!lastPointer) return;
+            spawnStars(lastPointer.x, lastPointer.y);
+            start();
+        });
+    }, { passive: true });
 
     let rafId = null;
 
@@ -452,6 +576,10 @@ function setupMagicCursor() {
             stars[i].update();
             stars[i].draw();
             if (stars[i].life <= 0) stars.splice(i, 1);
+        }
+        if (stars.length === 0) {
+            rafId = null;
+            return;
         }
         rafId = requestAnimationFrame(animate);
     }
@@ -469,8 +597,6 @@ function setupMagicCursor() {
 
     document.addEventListener('visibilitychange', () => {
         if (document.hidden) stop();
-        else start();
+        else if (stars.length > 0) start();
     });
-
-    start();
 }
