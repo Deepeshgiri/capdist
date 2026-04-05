@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Deepesh - Profile</title>
+    <title>CAP彡DIST — Profile</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css">
@@ -26,7 +29,7 @@
     <audio id="music2" loop src="media/music2.mp3"></audio>
     <audio id="music3" loop src="media/music3.mp3"></audio>
 
-    <div class="swiper-container">
+    <div class="swiper-container" data-nav-theme="1">
         <div class="swiper-wrapper">
 
             <!-- ── Slide 1: Cyberpunk ── -->
@@ -37,34 +40,84 @@
                 <div class="slide-overlay"></div>
                 <span class="theme-label">Cyberpunk</span>
                 <div class="container">
-                    <div class="avatar-section">
-                        <div class="avatar-decoration">
-                            <img src="https://cdn.discordapp.com/avatar-decoration-presets/a_ec5207e70ca2ef457c852d6135531d19.png" class="decoration-frame" alt="">
-                            <img id="discordAvatar" class="avatar-img" src="" alt="Avatar">
+                    <div class="slide-glass-shell">
+                        <svg class="glass-border-travel glass-border-travel--shell" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                            <defs>
+                                <linearGradient id="bbg-s1-sh" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="var(--c1)"/>
+                                    <stop offset="42%" stop-color="#ffffff"/>
+                                    <stop offset="100%" stop-color="var(--c2)"/>
+                                </linearGradient>
+                                <filter id="bbf-s1-sh" x="-45%" y="-45%" width="190%" height="190%" color-interpolation-filters="sRGB">
+                                    <feGaussianBlur in="SourceGraphic" stdDeviation="2.2" result="b"/>
+                                    <feColorMatrix in="b" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.65 0" result="g"/>
+                                    <feMerge>
+                                        <feMergeNode in="g"/>
+                                        <feMergeNode in="SourceGraphic"/>
+                                    </feMerge>
+                                </filter>
+                            </defs>
+                            <rect class="glass-border-travel__trail glass-border-travel__trail--shell" pathLength="100" x="1.25" y="1.25" width="97.5" height="97.5" rx="11" ry="11" fill="none"/>
+                            <rect class="glass-border-travel__glowline glass-border-travel__glowline--shell" pathLength="100" x="1.25" y="1.25" width="97.5" height="97.5" rx="11" ry="11" fill="none" filter="url(#bbf-s1-sh)" stroke="url(#bbg-s1-sh)"/>
+                            <rect class="glass-border-travel__stroke glass-border-travel__stroke--shell" pathLength="100" x="1.25" y="1.25" width="97.5" height="97.5" rx="11" ry="11" fill="none" stroke="url(#bbg-s1-sh)"/>
+                        </svg>
+                        <div class="avatar-section">
+                            <div class="avatar-decoration">
+                                <img src="https://cdn.discordapp.com/avatar-decoration-presets/a_ec5207e70ca2ef457c852d6135531d19.png" class="decoration-frame" alt="">
+                                <img id="discordAvatar" class="avatar-img" src="" alt="Avatar">
+                            </div>
+                            <h1 class="profile-name" id="discordName">Deepesh</h1>
+                            <div class="location" id="location">📍 Mars</div>
+                            <div class="presence-row" id="presenceRow" hidden>
+                                <img class="presence-art" id="presenceArt" alt="" width="36" height="36">
+                                <div class="presence-inner">
+                                    <span class="presence-label" id="presenceLabel"></span>
+                                    <span class="presence-text" id="presenceText"></span>
+                                </div>
+                            </div>
+                            <div class="meta-stats" id="metaStats"></div>
                         </div>
-                        <h1 class="profile-name" id="discordName">Deepesh</h1>
-                        <div class="location" id="location">📍 Mars</div>
-                    </div>
-                    <div class="dogtag-card">
-                        <div class="visitor-badge" id="visitorCount">0</div>
-                        <div class="dogtag-content">
-                            <div class="dogtag-avatar"><img id="dogtagAvatar" src="" alt=""></div>
-                            <div class="dogtag-info">
-                                <div class="dogtag-name" id="dogtagName">Deepesh<br><small>(CAP彡DIST)</small></div>
-                                <div class="dogtag-username" id="dogtagUsername">@deepeshgiri</div>
-                                <div class="dogtag-status">
-                                    <span class="status-dot" id="statusDot">●</span>
-                                    <span class="status-text" id="statusText">Online</span>
+                        <div class="dogtag-card slide-glass-dogtag">
+                            <svg class="glass-border-travel glass-border-travel--dogtag" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                                <defs>
+                                    <linearGradient id="bbg-s1-dg" x1="100%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" stop-color="var(--c1)"/>
+                                        <stop offset="45%" stop-color="#ffffff"/>
+                                        <stop offset="100%" stop-color="var(--c2)"/>
+                                    </linearGradient>
+                                    <filter id="bbf-s1-dg" x="-45%" y="-45%" width="190%" height="190%" color-interpolation-filters="sRGB">
+                                        <feGaussianBlur in="SourceGraphic" stdDeviation="1.8" result="b"/>
+                                        <feColorMatrix in="b" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.6 0" result="g"/>
+                                        <feMerge>
+                                            <feMergeNode in="g"/>
+                                            <feMergeNode in="SourceGraphic"/>
+                                        </feMerge>
+                                    </filter>
+                                </defs>
+                                <rect class="glass-border-travel__trail glass-border-travel__trail--dogtag" pathLength="100" x="1.25" y="1.25" width="97.5" height="97.5" rx="9" ry="9" fill="none"/>
+                                <rect class="glass-border-travel__glowline glass-border-travel__glowline--dogtag" pathLength="100" x="1.25" y="1.25" width="97.5" height="97.5" rx="9" ry="9" fill="none" filter="url(#bbf-s1-dg)" stroke="url(#bbg-s1-dg)"/>
+                                <rect class="glass-border-travel__stroke glass-border-travel__stroke--dogtag" pathLength="100" x="1.25" y="1.25" width="97.5" height="97.5" rx="9" ry="9" fill="none" stroke="url(#bbg-s1-dg)"/>
+                            </svg>
+                            <div class="visitor-badge" id="visitorCount">0</div>
+                            <div class="dogtag-content">
+                                <div class="dogtag-avatar"><img id="dogtagAvatar" src="" alt=""></div>
+                                <div class="dogtag-info">
+                                    <div class="dogtag-name" id="dogtagName">Deepesh<br><small>(CAP彡DIST)</small></div>
+                                    <div class="dogtag-username" id="dogtagUsername">@deepeshgiri</div>
+                                    <div class="dogtag-status">
+                                        <span class="status-dot" id="statusDot">●</span>
+                                        <span class="status-text" id="statusText">Online</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="social-links">
-                        <a href="https://www.instagram.com/_deepesh_giri/" class="social-link" data-name="Instagram" target="_blank"><i class="fab fa-instagram"></i></a>
-                        <a href="https://www.linkedin.com/in/deepesh-giri/" class="social-link" data-name="LinkedIn" target="_blank"><i class="fab fa-linkedin"></i></a>
-                        <a href="https://www.facebook.com/pandit.deepesh.giri/" class="social-link" data-name="Facebook" target="_blank"><i class="fab fa-facebook"></i></a>
-                        <a href="https://github.com/Deepeshgiri" class="social-link" data-name="GitHub" target="_blank"><i class="fab fa-github"></i></a>
-                        <a href="https://www.youtube.com/@learnmore4318" class="social-link" data-name="YouTube" target="_blank"><i class="fab fa-youtube"></i></a>
+                        <div class="social-links">
+                            <a href="https://www.instagram.com/_deepesh_giri/" class="social-link" data-name="Instagram" target="_blank"><i class="fab fa-instagram"></i></a>
+                            <a href="https://www.linkedin.com/in/deepesh-giri/" class="social-link" data-name="LinkedIn" target="_blank"><i class="fab fa-linkedin"></i></a>
+                            <a href="https://www.facebook.com/pandit.deepesh.giri/" class="social-link" data-name="Facebook" target="_blank"><i class="fab fa-facebook"></i></a>
+                            <a href="https://github.com/Deepeshgiri" class="social-link" data-name="GitHub" target="_blank"><i class="fab fa-github"></i></a>
+                            <a href="https://www.youtube.com/@learnmore4318" class="social-link" data-name="YouTube" target="_blank"><i class="fab fa-youtube"></i></a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -78,34 +131,84 @@
                 <div class="slide-overlay"></div>
                 <span class="theme-label">Synthwave</span>
                 <div class="container">
-                    <div class="avatar-section">
-                        <div class="avatar-decoration">
-                            <img src="https://cdn.discordapp.com/avatar-decoration-presets/a_ec5207e70ca2ef457c852d6135531d19.png" class="decoration-frame" alt="">
-                            <img id="discordAvatar2" class="avatar-img" src="" alt="Avatar">
+                    <div class="slide-glass-shell">
+                        <svg class="glass-border-travel glass-border-travel--shell" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                            <defs>
+                                <linearGradient id="bbg-s2-sh" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="var(--c1)"/>
+                                    <stop offset="42%" stop-color="#ffffff"/>
+                                    <stop offset="100%" stop-color="var(--c2)"/>
+                                </linearGradient>
+                                <filter id="bbf-s2-sh" x="-45%" y="-45%" width="190%" height="190%" color-interpolation-filters="sRGB">
+                                    <feGaussianBlur in="SourceGraphic" stdDeviation="2.2" result="b"/>
+                                    <feColorMatrix in="b" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.65 0" result="g"/>
+                                    <feMerge>
+                                        <feMergeNode in="g"/>
+                                        <feMergeNode in="SourceGraphic"/>
+                                    </feMerge>
+                                </filter>
+                            </defs>
+                            <rect class="glass-border-travel__trail glass-border-travel__trail--shell" pathLength="100" x="1.25" y="1.25" width="97.5" height="97.5" rx="11" ry="11" fill="none"/>
+                            <rect class="glass-border-travel__glowline glass-border-travel__glowline--shell" pathLength="100" x="1.25" y="1.25" width="97.5" height="97.5" rx="11" ry="11" fill="none" filter="url(#bbf-s2-sh)" stroke="url(#bbg-s2-sh)"/>
+                            <rect class="glass-border-travel__stroke glass-border-travel__stroke--shell" pathLength="100" x="1.25" y="1.25" width="97.5" height="97.5" rx="11" ry="11" fill="none" stroke="url(#bbg-s2-sh)"/>
+                        </svg>
+                        <div class="avatar-section">
+                            <div class="avatar-decoration">
+                                <img src="https://cdn.discordapp.com/avatar-decoration-presets/a_ec5207e70ca2ef457c852d6135531d19.png" class="decoration-frame" alt="">
+                                <img id="discordAvatar2" class="avatar-img" src="" alt="Avatar">
+                            </div>
+                            <h1 class="profile-name" id="discordName2">Deepesh</h1>
+                            <div class="location" id="location2">📍 Mars</div>
+                            <div class="presence-row" id="presenceRow2" hidden>
+                                <img class="presence-art" id="presenceArt2" alt="" width="36" height="36">
+                                <div class="presence-inner">
+                                    <span class="presence-label" id="presenceLabel2"></span>
+                                    <span class="presence-text" id="presenceText2"></span>
+                                </div>
+                            </div>
+                            <div class="meta-stats" id="metaStats2"></div>
                         </div>
-                        <h1 class="profile-name" id="discordName2">Deepesh</h1>
-                        <div class="location" id="location2">📍 Mars</div>
-                    </div>
-                    <div class="dogtag-card">
-                        <div class="visitor-badge" id="visitorCount2">0</div>
-                        <div class="dogtag-content">
-                            <div class="dogtag-avatar"><img id="dogtagAvatar2" src="" alt=""></div>
-                            <div class="dogtag-info">
-                                <div class="dogtag-name" id="dogtagName2">Deepesh<br><small>(CAP彡DIST)</small></div>
-                                <div class="dogtag-username" id="dogtagUsername2">@deepeshgiri</div>
-                                <div class="dogtag-status">
-                                    <span class="status-dot" id="statusDot2">●</span>
-                                    <span class="status-text" id="statusText2">Online</span>
+                        <div class="dogtag-card slide-glass-dogtag">
+                            <svg class="glass-border-travel glass-border-travel--dogtag" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                                <defs>
+                                    <linearGradient id="bbg-s2-dg" x1="100%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" stop-color="var(--c1)"/>
+                                        <stop offset="45%" stop-color="#ffffff"/>
+                                        <stop offset="100%" stop-color="var(--c2)"/>
+                                    </linearGradient>
+                                    <filter id="bbf-s2-dg" x="-45%" y="-45%" width="190%" height="190%" color-interpolation-filters="sRGB">
+                                        <feGaussianBlur in="SourceGraphic" stdDeviation="1.8" result="b"/>
+                                        <feColorMatrix in="b" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.6 0" result="g"/>
+                                        <feMerge>
+                                            <feMergeNode in="g"/>
+                                            <feMergeNode in="SourceGraphic"/>
+                                        </feMerge>
+                                    </filter>
+                                </defs>
+                                <rect class="glass-border-travel__trail glass-border-travel__trail--dogtag" pathLength="100" x="1.25" y="1.25" width="97.5" height="97.5" rx="9" ry="9" fill="none"/>
+                                <rect class="glass-border-travel__glowline glass-border-travel__glowline--dogtag" pathLength="100" x="1.25" y="1.25" width="97.5" height="97.5" rx="9" ry="9" fill="none" filter="url(#bbf-s2-dg)" stroke="url(#bbg-s2-dg)"/>
+                                <rect class="glass-border-travel__stroke glass-border-travel__stroke--dogtag" pathLength="100" x="1.25" y="1.25" width="97.5" height="97.5" rx="9" ry="9" fill="none" stroke="url(#bbg-s2-dg)"/>
+                            </svg>
+                            <div class="visitor-badge" id="visitorCount2">0</div>
+                            <div class="dogtag-content">
+                                <div class="dogtag-avatar"><img id="dogtagAvatar2" src="" alt=""></div>
+                                <div class="dogtag-info">
+                                    <div class="dogtag-name" id="dogtagName2">Deepesh<br><small>(CAP彡DIST)</small></div>
+                                    <div class="dogtag-username" id="dogtagUsername2">@deepeshgiri</div>
+                                    <div class="dogtag-status">
+                                        <span class="status-dot" id="statusDot2">●</span>
+                                        <span class="status-text" id="statusText2">Online</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="social-links">
-                        <a href="https://www.instagram.com/_deepesh_giri/" class="social-link" data-name="Instagram" target="_blank"><i class="fab fa-instagram"></i></a>
-                        <a href="https://www.linkedin.com/in/deepesh-giri/" class="social-link" data-name="LinkedIn" target="_blank"><i class="fab fa-linkedin"></i></a>
-                        <a href="https://www.facebook.com/pandit.deepesh.giri/" class="social-link" data-name="Facebook" target="_blank"><i class="fab fa-facebook"></i></a>
-                        <a href="https://github.com/Deepeshgiri" class="social-link" data-name="GitHub" target="_blank"><i class="fab fa-github"></i></a>
-                        <a href="https://www.youtube.com/@learnmore4318" class="social-link" data-name="YouTube" target="_blank"><i class="fab fa-youtube"></i></a>
+                        <div class="social-links">
+                            <a href="https://www.instagram.com/_deepesh_giri/" class="social-link" data-name="Instagram" target="_blank"><i class="fab fa-instagram"></i></a>
+                            <a href="https://www.linkedin.com/in/deepesh-giri/" class="social-link" data-name="LinkedIn" target="_blank"><i class="fab fa-linkedin"></i></a>
+                            <a href="https://www.facebook.com/pandit.deepesh.giri/" class="social-link" data-name="Facebook" target="_blank"><i class="fab fa-facebook"></i></a>
+                            <a href="https://github.com/Deepeshgiri" class="social-link" data-name="GitHub" target="_blank"><i class="fab fa-github"></i></a>
+                            <a href="https://www.youtube.com/@learnmore4318" class="social-link" data-name="YouTube" target="_blank"><i class="fab fa-youtube"></i></a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -119,34 +222,84 @@
                 <div class="slide-overlay"></div>
                 <span class="theme-label">Forest</span>
                 <div class="container">
-                    <div class="avatar-section">
-                        <div class="avatar-decoration">
-                            <img src="https://cdn.discordapp.com/avatar-decoration-presets/a_ec5207e70ca2ef457c852d6135531d19.png" class="decoration-frame" alt="">
-                            <img id="discordAvatar3" class="avatar-img" src="" alt="Avatar">
+                    <div class="slide-glass-shell">
+                        <svg class="glass-border-travel glass-border-travel--shell" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                            <defs>
+                                <linearGradient id="bbg-s3-sh" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="var(--c1)"/>
+                                    <stop offset="42%" stop-color="#ffffff"/>
+                                    <stop offset="100%" stop-color="var(--c2)"/>
+                                </linearGradient>
+                                <filter id="bbf-s3-sh" x="-45%" y="-45%" width="190%" height="190%" color-interpolation-filters="sRGB">
+                                    <feGaussianBlur in="SourceGraphic" stdDeviation="2.2" result="b"/>
+                                    <feColorMatrix in="b" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.65 0" result="g"/>
+                                    <feMerge>
+                                        <feMergeNode in="g"/>
+                                        <feMergeNode in="SourceGraphic"/>
+                                    </feMerge>
+                                </filter>
+                            </defs>
+                            <rect class="glass-border-travel__trail glass-border-travel__trail--shell" pathLength="100" x="1.25" y="1.25" width="97.5" height="97.5" rx="11" ry="11" fill="none"/>
+                            <rect class="glass-border-travel__glowline glass-border-travel__glowline--shell" pathLength="100" x="1.25" y="1.25" width="97.5" height="97.5" rx="11" ry="11" fill="none" filter="url(#bbf-s3-sh)" stroke="url(#bbg-s3-sh)"/>
+                            <rect class="glass-border-travel__stroke glass-border-travel__stroke--shell" pathLength="100" x="1.25" y="1.25" width="97.5" height="97.5" rx="11" ry="11" fill="none" stroke="url(#bbg-s3-sh)"/>
+                        </svg>
+                        <div class="avatar-section">
+                            <div class="avatar-decoration">
+                                <img src="https://cdn.discordapp.com/avatar-decoration-presets/a_ec5207e70ca2ef457c852d6135531d19.png" class="decoration-frame" alt="">
+                                <img id="discordAvatar3" class="avatar-img" src="" alt="Avatar">
+                            </div>
+                            <h1 class="profile-name" id="discordName3">Deepesh</h1>
+                            <div class="location" id="location3">📍 Mars</div>
+                            <div class="presence-row" id="presenceRow3" hidden>
+                                <img class="presence-art" id="presenceArt3" alt="" width="36" height="36">
+                                <div class="presence-inner">
+                                    <span class="presence-label" id="presenceLabel3"></span>
+                                    <span class="presence-text" id="presenceText3"></span>
+                                </div>
+                            </div>
+                            <div class="meta-stats" id="metaStats3"></div>
                         </div>
-                        <h1 class="profile-name" id="discordName3">Deepesh</h1>
-                        <div class="location" id="location3">📍 Mars</div>
-                    </div>
-                    <div class="dogtag-card">
-                        <div class="visitor-badge" id="visitorCount3">0</div>
-                        <div class="dogtag-content">
-                            <div class="dogtag-avatar"><img id="dogtagAvatar3" src="" alt=""></div>
-                            <div class="dogtag-info">
-                                <div class="dogtag-name" id="dogtagName3">Deepesh<br><small>(CAP彡DIST)</small></div>
-                                <div class="dogtag-username" id="dogtagUsername3">@deepeshgiri</div>
-                                <div class="dogtag-status">
-                                    <span class="status-dot" id="statusDot3">●</span>
-                                    <span class="status-text" id="statusText3">Online</span>
+                        <div class="dogtag-card slide-glass-dogtag">
+                            <svg class="glass-border-travel glass-border-travel--dogtag" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                                <defs>
+                                    <linearGradient id="bbg-s3-dg" x1="100%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" stop-color="var(--c1)"/>
+                                        <stop offset="45%" stop-color="#ffffff"/>
+                                        <stop offset="100%" stop-color="var(--c2)"/>
+                                    </linearGradient>
+                                    <filter id="bbf-s3-dg" x="-45%" y="-45%" width="190%" height="190%" color-interpolation-filters="sRGB">
+                                        <feGaussianBlur in="SourceGraphic" stdDeviation="1.8" result="b"/>
+                                        <feColorMatrix in="b" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.6 0" result="g"/>
+                                        <feMerge>
+                                            <feMergeNode in="g"/>
+                                            <feMergeNode in="SourceGraphic"/>
+                                        </feMerge>
+                                    </filter>
+                                </defs>
+                                <rect class="glass-border-travel__trail glass-border-travel__trail--dogtag" pathLength="100" x="1.25" y="1.25" width="97.5" height="97.5" rx="9" ry="9" fill="none"/>
+                                <rect class="glass-border-travel__glowline glass-border-travel__glowline--dogtag" pathLength="100" x="1.25" y="1.25" width="97.5" height="97.5" rx="9" ry="9" fill="none" filter="url(#bbf-s3-dg)" stroke="url(#bbg-s3-dg)"/>
+                                <rect class="glass-border-travel__stroke glass-border-travel__stroke--dogtag" pathLength="100" x="1.25" y="1.25" width="97.5" height="97.5" rx="9" ry="9" fill="none" stroke="url(#bbg-s3-dg)"/>
+                            </svg>
+                            <div class="visitor-badge" id="visitorCount3">0</div>
+                            <div class="dogtag-content">
+                                <div class="dogtag-avatar"><img id="dogtagAvatar3" src="" alt=""></div>
+                                <div class="dogtag-info">
+                                    <div class="dogtag-name" id="dogtagName3">Deepesh<br><small>(CAP彡DIST)</small></div>
+                                    <div class="dogtag-username" id="dogtagUsername3">@deepeshgiri</div>
+                                    <div class="dogtag-status">
+                                        <span class="status-dot" id="statusDot3">●</span>
+                                        <span class="status-text" id="statusText3">Online</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="social-links">
-                        <a href="https://www.instagram.com/_deepesh_giri/" class="social-link" data-name="Instagram" target="_blank"><i class="fab fa-instagram"></i></a>
-                        <a href="https://www.linkedin.com/in/deepesh-giri/" class="social-link" data-name="LinkedIn" target="_blank"><i class="fab fa-linkedin"></i></a>
-                        <a href="https://www.facebook.com/pandit.deepesh.giri/" class="social-link" data-name="Facebook" target="_blank"><i class="fab fa-facebook"></i></a>
-                        <a href="https://github.com/Deepeshgiri" class="social-link" data-name="GitHub" target="_blank"><i class="fab fa-github"></i></a>
-                        <a href="https://www.youtube.com/@learnmore4318" class="social-link" data-name="YouTube" target="_blank"><i class="fab fa-youtube"></i></a>
+                        <div class="social-links">
+                            <a href="https://www.instagram.com/_deepesh_giri/" class="social-link" data-name="Instagram" target="_blank"><i class="fab fa-instagram"></i></a>
+                            <a href="https://www.linkedin.com/in/deepesh-giri/" class="social-link" data-name="LinkedIn" target="_blank"><i class="fab fa-linkedin"></i></a>
+                            <a href="https://www.facebook.com/pandit.deepesh.giri/" class="social-link" data-name="Facebook" target="_blank"><i class="fab fa-facebook"></i></a>
+                            <a href="https://github.com/Deepeshgiri" class="social-link" data-name="GitHub" target="_blank"><i class="fab fa-github"></i></a>
+                            <a href="https://www.youtube.com/@learnmore4318" class="social-link" data-name="YouTube" target="_blank"><i class="fab fa-youtube"></i></a>
+                        </div>
                     </div>
                 </div>
             </div>

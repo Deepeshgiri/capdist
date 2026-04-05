@@ -16,10 +16,11 @@ html, body {
 }
 
 body {
-    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-family: 'Outfit', 'Segoe UI', system-ui, sans-serif;
     background: #000;
     color: #fff;
     overflow: hidden;
+    -webkit-font-smoothing: antialiased;
 }
 
 /* ─── Cursor Canvas ─────────────────────────────────────── */
@@ -76,6 +77,10 @@ body {
     height: 100dvh;
     position: relative;
     z-index: 1;
+    --nav-c1: #00d4ff;
+    --nav-c2: #ff00ff;
+    --nav-glow: rgba(0, 212, 255, 0.45);
+    --nav-surface: rgba(8, 12, 28, 0.55);
 }
 
 .swiper-wrapper {
@@ -90,6 +95,17 @@ body {
     align-items: center;
     justify-content: center;
     overflow: hidden;
+}
+
+/* Subtle film grain over video for depth */
+.swiper-slide::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /* ─── Per-slide video background ───────────────────────── */
@@ -131,20 +147,144 @@ body {
     backdrop-filter: blur(10px);
     color: var(--accent);
     pointer-events: none;
+    animation: themeLabelGlow 4.5s ease-in-out infinite;
 }
 
-/* ─── Swiper nav ────────────────────────────────────────── */
-.swiper-button-next, .swiper-button-prev {
-    color: #fff !important;
-    z-index: 10;
-    text-shadow: 0 0 10px rgba(0,0,0,0.8);
+/* ─── Swiper nav — theme via data-nav-theme on .swiper-container ─ */
+.swiper-container[data-nav-theme="2"] {
+    --nav-c1: #ff00c8;
+    --nav-c2: #ff6b00;
+    --nav-glow: rgba(255, 0, 200, 0.42);
+    --nav-surface: rgba(36, 0, 48, 0.55);
 }
-.swiper-button-next::after, .swiper-button-prev::after { font-size: clamp(16px, 3vw, 20px) !important; }
-.swiper-pagination { z-index: 10; }
-.swiper-pagination-bullet { background: rgba(255,255,255,0.5) !important; }
-.swiper-pagination-bullet-active { background: #fff !important; }
 
-/* ─── Card container — always dead center ──────────────── */
+.swiper-container[data-nav-theme="3"] {
+    --nav-c1: #00ff78;
+    --nav-c2: #00e5ff;
+    --nav-glow: rgba(0, 255, 120, 0.38);
+    --nav-surface: rgba(4, 28, 18, 0.55);
+}
+
+/* Mask SVGs: white = visible gradient. Sizes: btn = outer ring, arrow = btn / φ² (~38% of diameter) */
+.swiper-button-next,
+.swiper-button-prev {
+    --nav-arrow-mask-next: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='white' d='M9.29 6.71a1 1 0 000 1.41L13.17 12l-3.88 3.88a1 1 0 101.42 1.42l4.59-4.59a1 1 0 000-1.42l-4.59-4.58a1 1 0 00-1.41 0z'/%3E%3C/svg%3E");
+    --nav-arrow-mask-prev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='white' d='M14.71 6.71a1 1 0 010 1.41L10.83 12l3.88 3.88a1 1 0 11-1.42 1.42l-4.59-4.59a1 1 0 010-1.42l4.59-4.58a1 1 0 011.41 0z'/%3E%3C/svg%3E");
+    /* Compact control; φ² links inner glyph mass to outer ring */
+    --nav-btn: clamp(27px, 6.2vw, 31px);
+    --nav-arrow: calc(var(--nav-btn) / 2.618);
+    width: var(--nav-btn) !important;
+    height: var(--nav-btn) !important;
+    margin-top: 0 !important;
+    top: 50% !important;
+    color: transparent !important;
+    z-index: 20;
+    border-radius: 50%;
+    background: var(--nav-surface) !important;
+    border: 1px solid rgba(255, 255, 255, 0.11);
+    backdrop-filter: blur(14px) saturate(150%);
+    -webkit-backdrop-filter: blur(14px) saturate(150%);
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.05),
+        0 6px 22px rgba(0, 0, 0, 0.42),
+        0 0 18px var(--nav-glow);
+    transition: border-color 0.3s, box-shadow 0.3s, transform 0.25s, background 0.3s;
+}
+
+.swiper-button-next::after,
+.swiper-button-prev::after {
+    content: '' !important;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: var(--nav-arrow);
+    height: var(--nav-arrow);
+    margin: 0 !important;
+    transform: translate(-50%, -50%);
+    display: block !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
+    background: linear-gradient(
+        125deg,
+        var(--nav-c2) 0%,
+        var(--nav-c1) 20%,
+        rgba(255, 255, 255, 0.98) 40%,
+        var(--nav-c1) 50%,
+        rgba(255, 255, 255, 0.85) 58%,
+        var(--nav-c2) 82%,
+        var(--nav-c1) 100%
+    );
+    background-size: 300% 300%;
+    background-position: 0% 50%;
+    animation: navArrowGlitter 2.35s ease-in-out infinite;
+    pointer-events: none;
+}
+
+.swiper-button-next::after {
+    -webkit-mask: var(--nav-arrow-mask-next) center / contain no-repeat;
+    mask: var(--nav-arrow-mask-next) center / contain no-repeat;
+}
+
+.swiper-button-prev::after {
+    -webkit-mask: var(--nav-arrow-mask-prev) center / contain no-repeat;
+    mask: var(--nav-arrow-mask-prev) center / contain no-repeat;
+}
+
+@keyframes navArrowGlitter {
+    0%, 100% {
+        background-position: 8% 50%;
+        filter: drop-shadow(0 0 2px var(--nav-glow)) brightness(1);
+    }
+    35% {
+        background-position: 92% 50%;
+        filter: drop-shadow(0 0 7px rgba(255, 255, 255, 0.65)) brightness(1.2);
+    }
+    50% {
+        filter: drop-shadow(0 0 5px var(--nav-c1)) brightness(1.12);
+    }
+    70% {
+        filter: drop-shadow(0 0 6px var(--nav-c2)) brightness(1.08);
+    }
+}
+
+.swiper-button-prev { left: clamp(8px, 2.5vw, 22px) !important; right: auto !important; }
+.swiper-button-next { right: clamp(8px, 2.5vw, 22px) !important; left: auto !important; }
+
+.swiper-button-next:hover,
+.swiper-button-prev:hover {
+    border-color: var(--nav-c1);
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.09),
+        0 8px 28px rgba(0, 0, 0, 0.48),
+        0 0 26px var(--nav-glow);
+}
+
+.swiper-button-prev { transform: translateY(-50%); }
+.swiper-button-next { transform: translateY(-50%); }
+.swiper-button-prev:active { transform: translateY(-50%) scale(0.92); }
+.swiper-button-next:active { transform: translateY(-50%) scale(0.92); }
+
+.swiper-pagination {
+    z-index: 20;
+    bottom: clamp(14px, 3vh, 28px) !important;
+}
+
+.swiper-pagination-bullet {
+    width: 8px !important;
+    height: 8px !important;
+    background: rgba(255, 255, 255, 0.35) !important;
+    opacity: 1 !important;
+    transition: transform 0.25s, background 0.3s, box-shadow 0.3s !important;
+}
+
+.swiper-pagination-bullet-active {
+    width: 22px !important;
+    border-radius: 6px !important;
+    background: linear-gradient(90deg, var(--nav-c1), var(--nav-c2)) !important;
+    box-shadow: 0 0 16px var(--nav-glow) !important;
+}
+
+/* ─── Card container — layout only; glass on .slide-glass-shell + .slide-glass-dogtag ─ */
 .container {
     position: absolute;
     top: 50%;
@@ -154,8 +294,176 @@ body {
     width: min(460px, 92vw);
     display: flex;
     flex-direction: column;
+    align-items: stretch;
+}
+
+/* Outer glass: avatar, presence, meta, dogtag overlap, social */
+.slide-glass-shell {
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: clamp(12px, 2.5vh, 18px);
+    gap: clamp(8px, 1.8vh, 13px);
+    padding: clamp(20px, 4.2vw, 28px) clamp(16px, 3.6vw, 22px) clamp(22px, 4.5vw, 30px);
+    border-radius: clamp(22px, 5vw, 32px);
+    border: 1px solid var(--card-border);
+    background:
+        linear-gradient(
+            172deg,
+            rgba(255, 255, 255, 0.09) 0%,
+            rgba(255, 255, 255, 0.035) 48%,
+            rgba(0, 0, 0, 0.1) 100%
+        ),
+        var(--card-bg);
+    backdrop-filter: blur(14px) saturate(155%);
+    -webkit-backdrop-filter: blur(14px) saturate(155%);
+    box-shadow:
+        0 10px 40px rgba(0, 0, 0, 0.38),
+        0 0 0 1px rgba(255, 255, 255, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.13);
+    overflow: visible;
+    isolation: isolate;
+}
+
+/* Fancy border runner: comet trail + bloom + crisp gradient head (stroke-dash along path) */
+.glass-border-travel {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: visible;
+    filter:
+        drop-shadow(0 0 1px rgba(255, 255, 255, 0.95))
+        drop-shadow(0 0 6px rgba(255, 255, 255, 0.55))
+        drop-shadow(0 0 14px var(--accent))
+        drop-shadow(0 0 28px var(--glow))
+        drop-shadow(0 0 48px var(--glow));
+}
+
+.glass-border-travel--shell {
+    z-index: 2;
+}
+
+.glass-border-travel--dogtag {
+    z-index: 1;
+    filter:
+        drop-shadow(0 0 1px rgba(255, 255, 255, 0.9))
+        drop-shadow(0 0 5px rgba(255, 255, 255, 0.45))
+        drop-shadow(0 0 12px var(--accent))
+        drop-shadow(0 0 24px var(--glow));
+}
+
+/* Wide colored tail (uses theme accent; follows behind the head) */
+.glass-border-travel__trail {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+    stroke-dasharray: 26 74;
+    stroke-dashoffset: 0;
+    opacity: 0.5;
+    animation: borderStrokeTravel 5.2s linear infinite;
+    animation-delay: -0.55s;
+}
+
+.glass-border-travel__trail--shell {
+    stroke-width: 10;
+    stroke-dasharray: 28 72;
+}
+
+.glass-border-travel__trail--dogtag {
+    stroke-width: 7;
+    stroke-dasharray: 22 78;
+    animation-duration: 4.25s;
+    animation-direction: reverse;
+    animation-delay: -0.42s;
+}
+
+/* Mid layer: gradient segment + SVG bloom filter */
+.glass-border-travel__glowline {
+    fill: none;
+    stroke-width: 4.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+    stroke-dasharray: 11 89;
+    stroke-dashoffset: 0;
+    animation: borderStrokeTravel 5.2s linear infinite;
+    animation-delay: -0.22s;
+}
+
+.glass-border-travel__glowline--dogtag {
+    stroke-width: 3.75;
+    stroke-dasharray: 9 91;
+    animation-duration: 4.25s;
+    animation-direction: reverse;
+    animation-delay: -0.18s;
+}
+
+/* Bright spear tip */
+.glass-border-travel__stroke {
+    fill: none;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+    stroke-dasharray: 2.8 97.2;
+    stroke-dashoffset: 0;
+    animation:
+        borderStrokeTravel 5.2s linear infinite,
+        borderSparkle 1.65s ease-in-out infinite;
+}
+
+.glass-border-travel__stroke--shell {
+    stroke-width: 2.6;
+    stroke-dasharray: 2.5 97.5;
+}
+
+.glass-border-travel__stroke--dogtag {
+    stroke-width: 2.2;
+    stroke-dasharray: 2.4 97.6;
+    animation:
+        borderStrokeTravel 4.25s linear infinite reverse,
+        borderSparkle 1.45s ease-in-out infinite reverse;
+}
+
+@keyframes borderStrokeTravel {
+    to { stroke-dashoffset: -100; }
+}
+
+@keyframes borderSparkle {
+    0%, 100% { stroke-opacity: 1; }
+    35% { stroke-opacity: 0.72; }
+    55% { stroke-opacity: 0.95; }
+    75% { stroke-opacity: 1; }
+}
+
+.slide-glass-shell::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.045);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.slide-glass-shell .avatar-section,
+.slide-glass-shell .presence-row,
+.slide-glass-shell .meta-stats,
+.slide-glass-shell .social-links {
+    position: relative;
+    z-index: 3;
+    width: 100%;
+}
+
+.slide-glass-shell .social-links {
+    margin-top: clamp(4px, 1vh, 10px);
+    justify-content: center;
 }
 
 /* ─── Avatar ────────────────────────────────────────────── */
@@ -201,13 +509,16 @@ body {
 .profile-name {
     font-size: clamp(1.4rem, 5vw, 2rem);
     font-weight: 800;
-    background: linear-gradient(135deg, var(--c1), var(--c2));
+    background: linear-gradient(120deg, var(--c1), var(--c2), var(--c1));
+    background-size: 220% auto;
+    background-position: 0% 50%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     cursor: pointer;
     transition: filter .3s;
     text-shadow: none;
+    animation: nameGradientDrift 9s ease-in-out infinite;
 }
 .profile-name:hover { filter: drop-shadow(0 0 10px var(--accent)); }
 
@@ -215,34 +526,130 @@ body {
     font-size: clamp(0.8rem, 2.5vw, 0.95rem);
     color: rgba(255,255,255,0.65);
     margin-top: 5px;
+    letter-spacing: 0.02em;
 }
 
-/* ─── Dogtag Card ───────────────────────────────────────── */
-.dogtag-card {
+/* Lanyard: Spotify / game presence (inset strip inside shared glass) */
+.presence-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+    padding: 10px 14px;
     width: 100%;
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: 20px;
-    padding: clamp(14px, 3vw, 22px);
-    backdrop-filter: blur(20px) saturate(160%);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
-    box-shadow: 0 8px 40px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.1);
-    position: relative;
+    max-width: min(400px, 100%);
+    margin-left: auto;
+    margin-right: auto;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 14px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.presence-row[hidden] { display: none !important; }
+
+.presence-art {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+    box-shadow: 0 2px 14px rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.presence-art[hidden] { display: none; }
+
+.presence-inner {
+    min-width: 0;
+    text-align: left;
+}
+
+.presence-label {
+    display: block;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.42);
+    margin-bottom: 3px;
+}
+
+.presence-text {
+    font-size: clamp(0.76rem, 2.2vw, 0.88rem);
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.92);
+    line-height: 1.38;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
 }
 
-.dogtag-card::before {
-    content: '';
-    position: absolute; top: 0; left: -60%;
-    width: 60%; height: 2px;
-    background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    animation: shimmer 3s ease-in-out infinite;
+/* GitHub + weather pills */
+.meta-stats {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    max-width: min(420px, 100%);
+    min-height: 1.5em;
 }
-@keyframes shimmer { 0%,100% { left: -60%; } 50% { left: 120%; } }
+
+.meta-stats:empty { display: none; }
+
+.meta-pill {
+    font-size: clamp(0.66rem, 1.8vw, 0.78rem);
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.78);
+    letter-spacing: 0.02em;
+}
+
+.meta-pill i {
+    margin-right: 5px;
+    opacity: 0.88;
+}
+
+/* ─── Dogtag — second glass layer, stacked on top of shell ─ */
+.dogtag-card.slide-glass-dogtag {
+    width: calc(100% - 6px);
+    max-width: 100%;
+    align-self: center;
+    margin-top: clamp(-16px, -2.8vw, -8px);
+    z-index: 3;
+    padding: clamp(14px, 3vw, 20px) clamp(12px, 2.8vw, 18px);
+    border-radius: clamp(16px, 3.8vw, 22px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background:
+        linear-gradient(
+            158deg,
+            rgba(255, 255, 255, 0.11) 0%,
+            rgba(255, 255, 255, 0.04) 55%,
+            rgba(0, 0, 0, 0.12) 100%
+        ),
+        rgba(8, 10, 20, 0.32);
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    box-shadow:
+        0 10px 32px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(255, 255, 255, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    position: relative;
+    overflow: visible;
+}
+
 
 .visitor-badge {
     position: absolute;
-    top: 14px; right: 14px;
+    top: clamp(12px, 2.5vw, 18px);
+    right: clamp(10px, 2vw, 16px);
+    z-index: 4;
     background: linear-gradient(135deg, var(--c1), var(--c2));
     color: #fff;
     padding: 3px 12px;
@@ -258,6 +665,8 @@ body {
     gap: clamp(12px, 3vw, 20px);
     align-items: center;
     margin-top: 6px;
+    position: relative;
+    z-index: 2;
 }
 
 .dogtag-avatar {
@@ -316,13 +725,14 @@ body {
     width: clamp(44px, 10vw, 52px);
     height: clamp(44px, 10vw, 52px);
     display: flex; align-items: center; justify-content: center;
-    background: rgba(255,255,255,0.07);
+    background: rgba(255, 255, 255, 0.07);
     border-radius: 50%;
-    border: 2px solid rgba(255,255,255,0.15);
+    border: 1px solid rgba(255, 255, 255, 0.14);
     text-decoration: none;
     transition: transform .25s, box-shadow .25s, border-color .25s, background .25s;
     position: relative;
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(8px) saturate(130%);
+    -webkit-backdrop-filter: blur(8px) saturate(130%);
     -webkit-tap-highlight-color: transparent;
 }
 
@@ -369,6 +779,167 @@ body {
     100%{ opacity:0; transform:translateX(-50%) scale(.4) rotate(20deg); }
 }
 
+@keyframes nameGradientDrift {
+    0%, 100% { background-position: 0% 50%; }
+    50%      { background-position: 100% 50%; }
+}
+
+@keyframes themeLabelGlow {
+    0%, 100% {
+        box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+        opacity: 1;
+    }
+    50% {
+        box-shadow: 0 0 28px var(--glow);
+        opacity: 0.92;
+    }
+}
+
+@keyframes revealUp {
+    from {
+        opacity: 0;
+        transform: translateY(26px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes revealScale {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes panelAmbient {
+    0%, 100% {
+        box-shadow:
+            0 10px 40px rgba(0, 0, 0, 0.38),
+            0 0 0 1px rgba(255, 255, 255, 0.06),
+            inset 0 1px 0 rgba(255, 255, 255, 0.13),
+            0 0 0 rgba(0, 0, 0, 0);
+    }
+    50% {
+        box-shadow:
+            0 14px 52px rgba(0, 0, 0, 0.46),
+            0 0 0 1px rgba(255, 255, 255, 0.09),
+            inset 0 1px 0 rgba(255, 255, 255, 0.17),
+            0 0 32px var(--glow);
+    }
+}
+
+@keyframes dogtagAmbient {
+    0%, 100% {
+        box-shadow:
+            0 10px 32px rgba(0, 0, 0, 0.4),
+            0 0 0 1px rgba(255, 255, 255, 0.05),
+            inset 0 1px 0 rgba(255, 255, 255, 0.14),
+            0 0 0 rgba(0, 0, 0, 0);
+    }
+    50% {
+        box-shadow:
+            0 14px 40px rgba(0, 0, 0, 0.48),
+            0 0 0 1px rgba(255, 255, 255, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2),
+            0 0 22px var(--glow);
+    }
+}
+
+@keyframes visitorPop {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.06); }
+}
+
+/* Staggered entrance when a slide becomes active */
+.swiper-slide-active .avatar-section {
+    animation: revealScale 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.swiper-slide-active .profile-name {
+    animation:
+        revealUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.04s both,
+        nameGradientDrift 9s ease-in-out 0.5s infinite;
+}
+
+.swiper-slide-active .location {
+    animation: revealUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+
+.swiper-slide-active .presence-row:not([hidden]) {
+    animation: revealUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.14s both;
+}
+
+.swiper-slide-active .meta-stats:not(:empty) {
+    animation: revealUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.18s both;
+}
+
+.swiper-slide-active .slide-glass-shell {
+    animation: panelAmbient 5.5s ease-in-out 0.75s infinite;
+}
+
+.swiper-slide-active .dogtag-card.slide-glass-dogtag {
+    animation:
+        revealUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both,
+        dogtagAmbient 4.8s ease-in-out 0.9s infinite;
+}
+
+.swiper-slide-active .visitor-badge {
+    animation: visitorPop 2.8s ease-in-out infinite;
+    animation-delay: 0.5s;
+}
+
+.swiper-slide-active .social-link:nth-child(1) { animation: revealUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.22s both; }
+.swiper-slide-active .social-link:nth-child(2) { animation: revealUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.28s both; }
+.swiper-slide-active .social-link:nth-child(3) { animation: revealUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.34s both; }
+.swiper-slide-active .social-link:nth-child(4) { animation: revealUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.4s both; }
+.swiper-slide-active .social-link:nth-child(5) { animation: revealUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.46s both; }
+
+@media (prefers-reduced-motion: reduce) {
+    .profile-name,
+    .theme-label,
+    .swiper-slide-active .avatar-section,
+    .swiper-slide-active .profile-name,
+    .swiper-slide-active .location,
+    .swiper-slide-active .presence-row,
+    .swiper-slide-active .meta-stats,
+    .swiper-slide-active .slide-glass-shell,
+    .swiper-slide-active .dogtag-card.slide-glass-dogtag,
+    .swiper-slide-active .visitor-badge,
+    .swiper-slide-active .social-link:nth-child(n) {
+        animation: none !important;
+    }
+
+    .swiper-button-next::after,
+    .swiper-button-prev::after {
+        animation: none !important;
+        background: linear-gradient(135deg, var(--nav-c1), var(--nav-c2));
+        background-size: 100% 100%;
+        filter: drop-shadow(0 0 3px var(--nav-glow));
+    }
+
+    .profile-name {
+        background: linear-gradient(135deg, var(--c1), var(--c2));
+        background-size: 100% auto;
+    }
+
+    .glass-border-travel__trail,
+    .glass-border-travel__glowline,
+    .glass-border-travel__stroke {
+        animation: none !important;
+    }
+
+    .glass-border-travel,
+    .glass-border-travel--dogtag {
+        filter: drop-shadow(0 0 4px var(--glow));
+    }
+}
+
 /* ════════════════════════════════════════════════════════
    THEME 2 — Synthwave
 ════════════════════════════════════════════════════════ */
@@ -410,7 +981,13 @@ body {
 
 /* ─── Tiny phones ───────────────────────────────────────── */
 @media (max-width: 360px) {
-    .container { gap: 9px; }
-    .dogtag-card { padding: 11px; }
+    .slide-glass-shell {
+        padding: 16px 12px 18px;
+        gap: 6px;
+    }
+    .dogtag-card.slide-glass-dogtag {
+        padding: 12px 10px;
+        margin-top: -10px;
+    }
     .social-links { gap: 6px; }
 }

@@ -1,6 +1,16 @@
 let soundVolume = 0.5;
 let audioContext = null;
 const DISCORD_ID = '505285489776001024';
+
+/** Public GitHub username — free API: api.github.com/users/… */
+const GITHUB_USERNAME = 'Deepeshgiri';
+
+/**
+ * City name for Open-Meteo (free, no key). Leave empty to hide weather.
+ * Examples: 'Tokyo', 'London', 'Kathmandu'
+ */
+const WEATHER_CITY = '';
+
 const planets = ['🪐 Saturn', '🌍 Earth', '🔴 Mars', '🌙 Moon', '⭐ Andromeda', '🌌 Milky Way', '☄️ Asteroid Belt'];
 
 const tracks = [null, null, null]; // populated after DOM ready
@@ -17,12 +27,21 @@ document.addEventListener('DOMContentLoaded', () => {
     initVideo();
     setupSocialLinks();
     fetchLanyardData();
+    refreshMetaStats();
     trackVisitor();
     setRandomLocation();
     playSound('notification');
     initSwiper();
     setInterval(fetchLanyardData, 30000);
+    setInterval(refreshMetaStats, 600000);
 });
+
+function syncSwiperNavTheme(swiper) {
+    const el = document.querySelector('.swiper-container');
+    if (!el) return;
+    const i = swiper.realIndex;
+    el.dataset.navTheme = String((i >= 0 && i < 3 ? i : 0) + 1);
+}
 
 function initSwiper() {
     const swiper = new Swiper('.swiper-container', {
@@ -35,6 +54,12 @@ function initSwiper() {
         keyboard: { enabled: true }
     });
 
+    syncSwiperNavTheme(swiper);
+    swiper.on('slideChange', () => {
+        syncSwiperNavTheme(swiper);
+        switchTrack(swiper.realIndex);
+    });
+
     // Play music for the first slide on first user interaction
     const startMusic = () => {
         switchTrack(swiper.realIndex);
@@ -43,8 +68,6 @@ function initSwiper() {
     };
     document.addEventListener('click', startMusic);
     document.addEventListener('keydown', startMusic);
-
-    swiper.on('slideChange', () => switchTrack(swiper.realIndex));
 }
 
 function switchTrack(index) {
@@ -69,6 +92,73 @@ function setRandomLocation() {
     });
 }
 
+function presenceFromLanyard(payload) {
+    const d = payload.data;
+    if (!d) return null;
+
+    if (d.listening_to_spotify && d.spotify) {
+        const sp = d.spotify;
+        return {
+            label: 'Now playing',
+            body: `${sp.song} · ${sp.artist}`,
+            art: sp.album_art_url || null
+        };
+    }
+
+    const acts = d.activities || [];
+    const playing = acts.find(a => a.type === 0 && a.name);
+    if (playing) {
+        let body = playing.name;
+        if (playing.details) body += ` — ${playing.details}`;
+        if (playing.state) body += ` · ${playing.state}`;
+        return { label: 'In game', body, art: null };
+    }
+
+    const watching = acts.find(a => a.type === 3 && a.name);
+    if (watching) {
+        let body = watching.name;
+        if (watching.details) body += ` — ${watching.details}`;
+        return { label: 'Watching', body, art: null };
+    }
+
+    return null;
+}
+
+function applyPresenceToSlides(presence) {
+    ['', '2', '3'].forEach(s => {
+        const row = document.getElementById(`presenceRow${s}`);
+        const art = document.getElementById(`presenceArt${s}`);
+        const label = document.getElementById(`presenceLabel${s}`);
+        const text = document.getElementById(`presenceText${s}`);
+        if (!row || !label || !text) return;
+
+        if (!presence) {
+            row.hidden = true;
+            if (art) {
+                art.hidden = true;
+                art.removeAttribute('src');
+            }
+            label.textContent = '';
+            text.textContent = '';
+            return;
+        }
+
+        row.hidden = false;
+        label.textContent = presence.label;
+        text.textContent = presence.body;
+
+        if (art) {
+            if (presence.art) {
+                art.src = presence.art;
+                art.hidden = false;
+            } else {
+                art.hidden = true;
+                art.removeAttribute('src');
+            }
+        }
+    });
+}
+
 async function fetchLanyardData() {
     try {
         const response = await fetch(`https://api.lanyard.rest/v1/users/${DISCORD_ID}`);
@@ -88,6 +178,8 @@ async function fetchLanyardData() {
             };
             const currentStatus = statusMap[status] || statusMap['offline'];
 
+            applyPresenceToSlides(presenceFromLanyard(data));
+
             // suffixes: '' for slide 1, '2' for slide 2, '3' for slide 3
             ['', '2', '3'].forEach(s => {
                 const get = id => document.getElementById(id + s);
@@ -102,15 +194,99 @@ async function fetchLanyardData() {
                 if (avatar)   avatar.src = avatarUrl;
                 if (dtAvatar) dtAvatar.src = avatarUrl;
                 if (name)     name.textContent = displayName;
-                if (dtName)   dtName.innerHTML = `${displayName} <br>(CAP彡DIST)`;
+                if (dtName)   dtName.innerHTML = `${displayName} `;
                 if (dtUser)   dtUser.textContent = `@${user.username}`;
                 if (dot)      dot.style.color = currentStatus.color;
                 if (txt)      txt.textContent = currentStatus.text;
             });
+        } else {
+            applyPresenceToSlides(null);
         }
     } catch (error) {
         console.error('Error fetching Lanyard data:', error);
+        applyPresenceToSlides(null);
     }
+}
+
+function weatherEmojiFromCode(code) {
+    if (code == null) return '🌡️';
+    if (code === 0) return '☀️';
+    if (code <= 3) return '⛅';
+    if (code <= 48) return '🌫️';
+    if (code <= 67) return '🌧️';
+    if (code <= 77) return '❄️';
+    if (code <= 82) return '🌧️';
+    if (code <= 86) return '❄️';
+    if (code >= 95) return '⛈️';
+    return '🌡️';
+}
+
+async function fetchOpenMeteoWeather(city) {
+    if (!city || !city.trim()) return null;
+    const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city.trim())}&count=1`;
+    const geoRes = await fetch(geoUrl);
+    const geo = await geoRes.json();
+    const hit = geo.results && geo.results[0];
+    if (!hit) return null;
+
+    const { latitude, longitude, name } = hit;
+    const wxUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code`;
+    const wxRes = await fetch(wxUrl);
+    const wx = await wxRes.json();
+    const t = wx.current && wx.current.temperature_2m;
+    const code = wx.current && wx.current.weather_code;
+    if (t == null) return null;
+
+    const icon = weatherEmojiFromCode(code);
+    return { label: `${icon} ${Math.round(t)}°C`, sub: name || city };
+}
+
+async function fetchGitHubPublicProfile() {
+    if (!GITHUB_USERNAME) return null;
+    const res = await fetch(`https://api.github.com/users/${encodeURIComponent(GITHUB_USERNAME)}`);
+    if (!res.ok) return null;
+    const j = await res.json();
+    return {
+        followers: j.followers,
+        repos: j.public_repos
+    };
+}
+
+function setMetaStatsHtml(innerHtml) {
+    ['metaStats', 'metaStats2', 'metaStats3'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = innerHtml;
+    });
+}
+
+async function refreshMetaStats() {
+    const pills = [];
+
+    try {
+        const gh = await fetchGitHubPublicProfile();
+        if (gh) {
+            pills.push(
+                `<span class="meta-pill" title="GitHub @${GITHUB_USERNAME}"><i class="fab fa-github" aria-hidden="true"></i>${gh.followers} followers · ${gh.repos} repos</span>`
+            );
+        }
+    } catch (e) {
+        console.warn('GitHub profile fetch failed:', e);
+    }
+
+    try {
+        if (WEATHER_CITY && WEATHER_CITY.trim()) {
+            const w = await fetchOpenMeteoWeather(WEATHER_CITY);
+            if (w) {
+                pills.push(
+                    `<span class="meta-pill" title="${w.sub}"><i class="fas fa-cloud-sun" aria-hidden="true"></i>${w.label} ${w.sub}</span>`
+                );
+            }
+        }
+    } catch (e) {
+        console.warn('Weather fetch failed:', e);
+    }
+
+    setMetaStatsHtml(pills.join(''));
 }
 
 function trackVisitor() {
