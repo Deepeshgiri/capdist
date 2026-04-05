@@ -266,7 +266,7 @@ async function refreshMetaStats() {
         const gh = await fetchGitHubPublicProfile();
         if (gh) {
             pills.push(
-                `<span class="meta-pill" title="GitHub @${GITHUB_USERNAME}"><i class="fab fa-github" aria-hidden="true"></i>${gh.followers} followers · ${gh.repos} repos</span>`
+                `<span class="badge rounded-pill bg-black bg-opacity-25 text-white border border-white border-opacity-10 px-3 py-2 fw-semibold meta-badge" title="GitHub @${GITHUB_USERNAME}"><i class="fab fa-github" aria-hidden="true"></i>${gh.followers} followers · ${gh.repos} repos</span>`
             );
         }
     } catch (e) {
@@ -278,7 +278,7 @@ async function refreshMetaStats() {
             const w = await fetchOpenMeteoWeather(WEATHER_CITY);
             if (w) {
                 pills.push(
-                    `<span class="meta-pill" title="${w.sub}"><i class="fas fa-cloud-sun" aria-hidden="true"></i>${w.label} ${w.sub}</span>`
+                    `<span class="badge rounded-pill bg-black bg-opacity-25 text-white border border-white border-opacity-10 px-3 py-2 fw-semibold meta-badge" title="${w.sub}"><i class="fas fa-cloud-sun" aria-hidden="true"></i>${w.label} ${w.sub}</span>`
                 );
             }
         }
@@ -382,13 +382,29 @@ function setupSocialLinks() {
 
 function setupMagicCursor() {
     const canvas = document.getElementById('cursorCanvas');
+    if (!canvas) return;
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const finePointer = window.matchMedia('(pointer: fine)').matches;
+
+    if (!finePointer || prefersReducedMotion) {
+        canvas.style.display = 'none';
+        return;
+    }
+
     const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    window.addEventListener('resize', () => {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    });
+
+    const resizeCanvas = () => {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.floor(window.innerWidth * dpr);
+        canvas.height = Math.floor(window.innerHeight * dpr);
+        canvas.style.width = `${window.innerWidth}px`;
+        canvas.style.height = `${window.innerHeight}px`;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
 
     const stars = [];
 
@@ -424,21 +440,37 @@ function setupMagicCursor() {
         }
     }
 
-    // Only run cursor trail on non-touch devices
-    if (window.matchMedia('(hover: hover)').matches) {
-        document.addEventListener('mousemove', (e) => {
-            for (let i = 0; i < 3; i++) stars.push(new Star(e.clientX, e.clientY));
-        });
-    }
+    document.addEventListener('mousemove', (e) => {
+        for (let i = 0; i < 3; i++) stars.push(new Star(e.clientX, e.clientY));
+    });
+
+    let rafId = null;
 
     function animate() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
         for (let i = stars.length - 1; i >= 0; i--) {
             stars[i].update();
             stars[i].draw();
             if (stars[i].life <= 0) stars.splice(i, 1);
         }
-        requestAnimationFrame(animate);
+        rafId = requestAnimationFrame(animate);
     }
-    animate();
+
+    const start = () => {
+        if (rafId != null) return;
+        animate();
+    };
+
+    const stop = () => {
+        if (rafId == null) return;
+        cancelAnimationFrame(rafId);
+        rafId = null;
+    };
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) stop();
+        else start();
+    });
+
+    start();
 }
