@@ -1,96 +1,36 @@
 let soundVolume = 0.5;
 let audioContext = null;
 const DISCORD_ID = '505285489776001024';
-
-/** Public GitHub username — free API: api.github.com/users/… */
 const GITHUB_USERNAME = 'Deepeshgiri';
-
-/**
- * City name for Open-Meteo (free, no key). Leave empty to hide weather.
- * Examples: 'Tokyo', 'London', 'Kathmandu'
- */
-const WEATHER_CITY = '';
-
 const planets = ['🪐 Saturn', '🌍 Earth', '🔴 Mars', '🌙 Moon', '⭐ Andromeda', '🌌 Milky Way', '☄️ Asteroid Belt'];
-
-const tracks = [null, null, null]; // populated after DOM ready
-let currentTrack = null;
-let perfProfile = { low: false, reasons: [] };
+const tracks = [null, null, null];
+let perfProfile = { low: false };
 
 function detectPerfProfile() {
     const reasons = [];
-
+    try { if (navigator.connection && navigator.connection.saveData) reasons.push('save-data'); } catch {}
+    try { const m = navigator.deviceMemory; if (m > 0 && m <= 4) reasons.push('low-memory'); } catch {}
+    try { const c = navigator.hardwareConcurrency; if (c > 0 && c <= 4) reasons.push('low-cores'); } catch {}
+    try { if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) reasons.push('reduced-motion'); } catch {}
     try {
-        if (navigator.connection && navigator.connection.saveData) reasons.push('save-data');
-    } catch {}
-
-    try {
-        const deviceMemory = navigator.deviceMemory;
-        if (typeof deviceMemory === 'number' && deviceMemory > 0 && deviceMemory <= 4) reasons.push('low-memory');
-    } catch {}
-
-    try {
+        const coarse = window.matchMedia('(pointer: coarse)').matches;
         const cores = navigator.hardwareConcurrency;
-        if (typeof cores === 'number' && cores > 0 && cores <= 4) reasons.push('low-cores');
+        if (coarse && cores > 0 && cores <= 4) reasons.push('coarse-pointer');
     } catch {}
-
-    try {
-        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        if (reducedMotion) reasons.push('reduced-motion');
-    } catch {}
-
-    try {
-        const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
-        if (coarsePointer) reasons.push('coarse-pointer');
-    } catch {}
-
-    return { low: reasons.length > 0, reasons };
-}
-
-function applyPerfMode() {
-    perfProfile = detectPerfProfile();
-    const root = document.documentElement;
-    if (perfProfile.low) root.dataset.perf = 'low';
-    else delete root.dataset.perf;
+    return { low: reasons.length > 0 };
 }
 
 function ensureLazyVideoLoaded(video) {
     if (!video) return;
     const sources = video.querySelectorAll('source[data-src]');
-    if (!sources.length) return;
-
     let changed = false;
-    sources.forEach(s => {
-        const hasSrc = s.getAttribute('src');
-        if (!hasSrc) {
-            s.setAttribute('src', s.dataset.src || '');
-            changed = true;
-        }
-    });
-    if (changed) {
-        try { video.load(); } catch {}
-    }
-}
-
-function unloadLazyVideo(video) {
-    if (!video) return;
-    const sources = video.querySelectorAll('source[data-src]');
-    if (!sources.length) return;
-
-    let changed = false;
-    sources.forEach(s => {
-        if (s.getAttribute('src')) {
-            s.removeAttribute('src');
-            changed = true;
-        }
-    });
-    if (changed) {
-        try { video.load(); } catch {}
-    }
+    sources.forEach(s => { if (!s.getAttribute('src')) { s.setAttribute('src', s.dataset.src || ''); changed = true; } });
+    if (changed) try { video.load(); } catch {}
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    applyPerfMode();
+    perfProfile = detectPerfProfile();
+    if (perfProfile.low) document.documentElement.dataset.perf = 'low';
 
     tracks[0] = document.getElementById('music1');
     tracks[1] = document.getElementById('music2');
@@ -108,50 +48,35 @@ document.addEventListener('DOMContentLoaded', () => {
     let lanyardTimer = null;
     let metaTimer = null;
     const startTimers = () => {
-        if (lanyardTimer == null) lanyardTimer = setInterval(fetchLanyardData, 30000);
-        if (metaTimer == null) metaTimer = setInterval(refreshMetaStats, 600000);
+        if (!lanyardTimer) lanyardTimer = setInterval(fetchLanyardData, 30000);
+        if (!metaTimer) metaTimer = setInterval(refreshMetaStats, 600000);
     };
     const stopTimers = () => {
-        if (lanyardTimer != null) { clearInterval(lanyardTimer); lanyardTimer = null; }
-        if (metaTimer != null) { clearInterval(metaTimer); metaTimer = null; }
+        clearInterval(lanyardTimer); lanyardTimer = null;
+        clearInterval(metaTimer); metaTimer = null;
     };
 
     startTimers();
     document.addEventListener('visibilitychange', () => {
         if (document.hidden) stopTimers();
-        else {
-            fetchLanyardData();
-            refreshMetaStats();
-            startTimers();
-        }
+        else { fetchLanyardData(); refreshMetaStats(); startTimers(); }
     });
 });
 
 function ensureAudioContext() {
-    if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (audioContext.state === 'suspended') {
-        audioContext.resume().catch(() => {});
-    }
+    if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioContext.state === 'suspended') audioContext.resume().catch(() => {});
 }
 
 function syncSwiperNavTheme(swiper) {
     const el = document.querySelector('.swiper-container');
-    if (!el) return;
-    const i = swiper.realIndex;
-    el.dataset.navTheme = String((i >= 0 && i < 3 ? i : 0) + 1);
+    if (el) el.dataset.navTheme = String((swiper.realIndex % 3) + 1);
 }
 
 function syncActiveSlideVideo(swiper) {
-    const videos = document.querySelectorAll('.slide-video');
-    videos.forEach(v => {
-        try { v.pause(); } catch {}
-        if (perfProfile.low) unloadLazyVideo(v);
-    });
-
-    const activeSlide = swiper && swiper.slides && swiper.slides[swiper.activeIndex];
-    const activeVideo = activeSlide && activeSlide.querySelector && activeSlide.querySelector('.slide-video');
+    document.querySelectorAll('.slide-video').forEach(v => { try { v.pause(); } catch {} });
+    const activeSlide = swiper?.slides?.[swiper.activeIndex];
+    const activeVideo = activeSlide?.querySelector('.slide-video');
     if (activeVideo) {
         ensureLazyVideoLoaded(activeVideo);
         activeVideo.play().catch(() => {
@@ -179,7 +104,6 @@ function initSwiper() {
         syncActiveSlideVideo(swiper);
     });
 
-    // Play music for the first slide on first user interaction
     const startMusic = () => {
         switchTrack(swiper.realIndex);
         document.removeEventListener('click', startMusic);
@@ -192,38 +116,26 @@ function initSwiper() {
 function switchTrack(index) {
     tracks.forEach((t, i) => {
         if (!t) return;
-        if (i === index) {
-            t.volume = soundVolume;
-            t.play().catch(() => {});
-        } else {
-            t.pause();
-            t.currentTime = 0;
-        }
+        if (i === index) { t.volume = soundVolume; t.play().catch(() => {}); }
+        else { t.pause(); t.currentTime = 0; }
     });
-    currentTrack = tracks[index];
 }
 
 function setRandomLocation() {
-    const location = planets[Math.floor(Math.random() * planets.length)];
+    const loc = planets[Math.floor(Math.random() * planets.length)];
     ['location', 'location2', 'location3'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.textContent = location;
+        if (el) el.textContent = loc;
     });
 }
 
 function presenceFromLanyard(payload) {
     const d = payload.data;
     if (!d) return null;
-
     if (d.listening_to_spotify && d.spotify) {
         const sp = d.spotify;
-        return {
-            label: 'Now playing',
-            body: `${sp.song} · ${sp.artist}`,
-            art: sp.album_art_url || null
-        };
+        return { label: 'Now playing', body: `${sp.song} · ${sp.artist}`, art: sp.album_art_url || null };
     }
-
     const acts = d.activities || [];
     const playing = acts.find(a => a.type === 0 && a.name);
     if (playing) {
@@ -232,14 +144,12 @@ function presenceFromLanyard(payload) {
         if (playing.state) body += ` · ${playing.state}`;
         return { label: 'In game', body, art: null };
     }
-
     const watching = acts.find(a => a.type === 3 && a.name);
     if (watching) {
         let body = watching.name;
         if (watching.details) body += ` — ${watching.details}`;
         return { label: 'Watching', body, art: null };
     }
-
     return null;
 }
 
@@ -250,114 +160,59 @@ function applyPresenceToSlides(presence) {
         const label = document.getElementById(`presenceLabel${s}`);
         const text = document.getElementById(`presenceText${s}`);
         if (!row || !label || !text) return;
-
         if (!presence) {
             row.hidden = true;
-            if (art) {
-                art.hidden = true;
-                art.removeAttribute('src');
-            }
+            if (art) { art.hidden = true; art.removeAttribute('src'); }
             label.textContent = '';
             text.textContent = '';
             return;
         }
-
         row.hidden = false;
         label.textContent = presence.label;
         text.textContent = presence.body;
-
         if (art) {
-            if (presence.art) {
-                art.src = presence.art;
-                art.hidden = false;
-            } else {
-                art.hidden = true;
-                art.removeAttribute('src');
-            }
+            if (presence.art) { art.src = presence.art; art.hidden = false; }
+            else { art.hidden = true; art.removeAttribute('src'); }
         }
     });
 }
 
 async function fetchLanyardData() {
     try {
-        const response = await fetch(`https://api.lanyard.rest/v1/users/${DISCORD_ID}`);
-        const data = await response.json();
+        const data = await fetch(`https://api.lanyard.rest/v1/users/${DISCORD_ID}`).then(r => r.json());
+        if (!data.success) { applyPresenceToSlides(null); return; }
 
-        if (data.success) {
-            const user = data.data.discord_user;
-            const status = data.data.discord_status;
-            const avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=256`;
-            const displayName = user.display_name || user.global_name;
+        const user = data.data.discord_user;
+        const status = data.data.discord_status;
+        const avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=256`;
+        const displayName = user.display_name || user.global_name;
+        const statusMap = {
+            online: { text: 'Online', color: '#43b581' },
+            idle:   { text: 'Idle',   color: '#faa61a' },
+            dnd:    { text: 'Do Not Disturb', color: '#f04747' },
+            offline:{ text: 'Offline', color: '#747f8d' }
+        };
+        const currentStatus = statusMap[status] || statusMap.offline;
 
-            const statusMap = {
-                'online':  { text: 'Online',          color: '#43b581' },
-                'idle':    { text: 'Idle',             color: '#faa61a' },
-                'dnd':     { text: 'Do Not Disturb',   color: '#f04747' },
-                'offline': { text: 'Offline',          color: '#747f8d' }
-            };
-            const currentStatus = statusMap[status] || statusMap['offline'];
+        applyPresenceToSlides(presenceFromLanyard(data));
 
-            applyPresenceToSlides(presenceFromLanyard(data));
-
-            // suffixes: '' for slide 1, '2' for slide 2, '3' for slide 3
-            ['', '2', '3'].forEach(s => {
-                const get = id => document.getElementById(id + s);
-                const avatar  = get('discordAvatar');
-                const dtAvatar = get('dogtagAvatar');
-                const name    = get('discordName');
-                const dtName  = get('dogtagName');
-                const dtUser  = get('dogtagUsername');
-                const dot     = get('statusDot');
-                const txt     = get('statusText');
-
-                if (avatar)   avatar.src = avatarUrl;
-                if (dtAvatar) dtAvatar.src = avatarUrl;
-                if (name)     name.textContent = displayName;
-                if (dtName)   dtName.innerHTML = `${displayName} `;
-                if (dtUser)   dtUser.textContent = `@${user.username}`;
-                if (dot)      dot.style.color = currentStatus.color;
-                if (txt)      txt.textContent = currentStatus.text;
-            });
-        } else {
-            applyPresenceToSlides(null);
-        }
-    } catch (error) {
-        console.error('Error fetching Lanyard data:', error);
+        ['', '2', '3'].forEach(s => {
+            const get = id => document.getElementById(id + s);
+            const avatar = get('discordAvatar'), dtAvatar = get('dogtagAvatar');
+            const name = get('discordName'), dtName = get('dogtagName');
+            const dtUser = get('dogtagUsername'), dot = get('statusDot'), txt = get('statusText');
+            if (avatar)   avatar.src = avatarUrl;
+            if (dtAvatar) dtAvatar.src = avatarUrl;
+            if (name)     name.textContent = displayName;
+            if (dtName)   dtName.innerHTML = `${displayName} `;
+            if (dtUser)   dtUser.textContent = `@${user.username}`;
+            if (dot)      dot.style.color = currentStatus.color;
+            if (txt)      txt.textContent = currentStatus.text;
+        });
+    } catch (e) {
+        console.error('Lanyard fetch failed:', e);
         applyPresenceToSlides(null);
     }
-}
-
-function weatherEmojiFromCode(code) {
-    if (code == null) return '🌡️';
-    if (code === 0) return '☀️';
-    if (code <= 3) return '⛅';
-    if (code <= 48) return '🌫️';
-    if (code <= 67) return '🌧️';
-    if (code <= 77) return '❄️';
-    if (code <= 82) return '🌧️';
-    if (code <= 86) return '❄️';
-    if (code >= 95) return '⛈️';
-    return '🌡️';
-}
-
-async function fetchOpenMeteoWeather(city) {
-    if (!city || !city.trim()) return null;
-    const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city.trim())}&count=1`;
-    const geoRes = await fetch(geoUrl);
-    const geo = await geoRes.json();
-    const hit = geo.results && geo.results[0];
-    if (!hit) return null;
-
-    const { latitude, longitude, name } = hit;
-    const wxUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code`;
-    const wxRes = await fetch(wxUrl);
-    const wx = await wxRes.json();
-    const t = wx.current && wx.current.temperature_2m;
-    const code = wx.current && wx.current.weather_code;
-    if (t == null) return null;
-
-    const icon = weatherEmojiFromCode(code);
-    return { label: `${icon} ${Math.round(t)}°C`, sub: name || city };
 }
 
 async function fetchGitHubPublicProfile() {
@@ -365,52 +220,26 @@ async function fetchGitHubPublicProfile() {
     const res = await fetch(`https://api.github.com/users/${encodeURIComponent(GITHUB_USERNAME)}`);
     if (!res.ok) return null;
     const j = await res.json();
-    return {
-        followers: j.followers,
-        repos: j.public_repos
-    };
-}
-
-function setMetaStatsHtml(innerHtml) {
-    ['metaStats', 'metaStats2', 'metaStats3'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.innerHTML = innerHtml;
-    });
+    return { followers: j.followers, repos: j.public_repos };
 }
 
 async function refreshMetaStats() {
-    const pills = [];
-
     try {
         const gh = await fetchGitHubPublicProfile();
-        if (gh) {
-            pills.push(
-                `<span class="badge rounded-pill bg-black bg-opacity-25 text-white border border-white border-opacity-10 px-3 py-2 fw-semibold meta-badge" title="GitHub @${GITHUB_USERNAME}"><i class="fab fa-github" aria-hidden="true"></i>${gh.followers} followers · ${gh.repos} repos</span>`
-            );
-        }
+        const html = gh
+            ? `<span class="badge rounded-pill bg-black bg-opacity-25 text-white border border-white border-opacity-10 px-3 py-2 fw-semibold meta-badge" title="GitHub @${GITHUB_USERNAME}"><i class="fab fa-github" aria-hidden="true"></i>${gh.followers} followers · ${gh.repos} repos</span>`
+            : '';
+        ['metaStats', 'metaStats2', 'metaStats3'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = html;
+        });
     } catch (e) {
-        console.warn('GitHub profile fetch failed:', e);
+        console.warn('GitHub fetch failed:', e);
     }
-
-    try {
-        if (WEATHER_CITY && WEATHER_CITY.trim()) {
-            const w = await fetchOpenMeteoWeather(WEATHER_CITY);
-            if (w) {
-                pills.push(
-                    `<span class="badge rounded-pill bg-black bg-opacity-25 text-white border border-white border-opacity-10 px-3 py-2 fw-semibold meta-badge" title="${w.sub}"><i class="fas fa-cloud-sun" aria-hidden="true"></i>${w.label} ${w.sub}</span>`
-                );
-            }
-        }
-    } catch (e) {
-        console.warn('Weather fetch failed:', e);
-    }
-
-    setMetaStatsHtml(pills.join(''));
 }
 
 function trackVisitor() {
-    let visitors = parseInt(localStorage.getItem('visitorCount') || '0');
-    visitors++;
+    const visitors = (parseInt(localStorage.getItem('visitorCount') || '0') + 1);
     localStorage.setItem('visitorCount', visitors);
     ['visitorCount', 'visitorCount2', 'visitorCount3'].forEach(id => {
         const el = document.getElementById(id);
@@ -424,57 +253,32 @@ function setupVolumeControl() {
     const volumeControl = document.getElementById('volumeControl');
 
     volumeBtn.addEventListener('click', () => volumeSlider.classList.toggle('active'));
-
-    volumeControl.addEventListener('input', (e) => {
+    volumeControl.addEventListener('input', e => {
         soundVolume = e.target.value / 100;
-        updateVolumeIcon(soundVolume);
-        // sync music volume live
+        const icon = document.querySelector('#volumeBtn .icon');
+        icon.textContent = soundVolume === 0 ? '🔇' : soundVolume < 0.5 ? '🔉' : '🔊';
         tracks.forEach(t => { if (t) t.volume = soundVolume; });
     });
-
-    document.addEventListener('click', (e) => {
-        if (!volumeBtn.contains(e.target) && !volumeSlider.contains(e.target)) {
+    document.addEventListener('click', e => {
+        if (!volumeBtn.contains(e.target) && !volumeSlider.contains(e.target))
             volumeSlider.classList.remove('active');
-        }
     });
 }
-
-function updateVolumeIcon(volume) {
-    const icon = document.querySelector('#volumeBtn .icon');
-    icon.textContent = volume === 0 ? '🔇' : volume < 0.5 ? '🔉' : '🔊';
-}
-
-const sounds = {
-    hover:        { frequency: 800,                        duration: 0.1  },
-    click:        { frequency: 600,                        duration: 0.2  },
-    notification: { frequency: [523.25, 659.25, 783.99],   duration: 0.15 }
-};
 
 function playSound(soundName) {
     if (soundVolume === 0) return;
     ensureAudioContext();
-    const sound = sounds[soundName];
-    if (!sound) return;
-    if (Array.isArray(sound.frequency)) {
-        sound.frequency.forEach((freq, i) => playTone(freq, audioContext.currentTime, sound.duration, i * 0.05));
-    } else {
-        playTone(sound.frequency, audioContext.currentTime, sound.duration);
-    }
-}
-
-function playTone(frequency, startTime, duration, delay = 0) {
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    oscillator.frequency.value = frequency;
-    oscillator.type = 'sine';
-    const t = startTime + delay;
-    gainNode.gain.setValueAtTime(0, t);
-    gainNode.gain.linearRampToValueAtTime(soundVolume * 0.3, t + 0.01);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, t + duration - 0.01);
-    oscillator.start(t);
-    oscillator.stop(t + duration);
+    const freq = soundName === 'hover' ? 800 : 600;
+    const dur  = soundName === 'hover' ? 0.1  : 0.2;
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    osc.connect(gain); gain.connect(audioContext.destination);
+    osc.frequency.value = freq; osc.type = 'sine';
+    const t = audioContext.currentTime;
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(soundVolume * 0.3, t + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.01, t + dur - 0.01);
+    osc.start(t); osc.stop(t + dur);
 }
 
 function setupSocialLinks() {
@@ -491,23 +295,13 @@ function setupSocialLinks() {
 function setupMagicCursor() {
     const canvas = document.getElementById('cursorCanvas');
     if (!canvas) return;
-
-    if (perfProfile.low) {
-        canvas.style.display = 'none';
-        return;
-    }
-
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const finePointer = window.matchMedia('(pointer: fine)').matches;
-
-    if (!finePointer || prefersReducedMotion) {
+    if (perfProfile.low || !window.matchMedia('(pointer: fine)').matches || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         canvas.style.display = 'none';
         return;
     }
 
     const ctx = canvas.getContext('2d');
-
-    const resizeCanvas = () => {
+    const resize = () => {
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
         canvas.width = Math.floor(window.innerWidth * dpr);
         canvas.height = Math.floor(window.innerHeight * dpr);
@@ -515,31 +309,27 @@ function setupMagicCursor() {
         canvas.style.height = `${window.innerHeight}px`;
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
-
-    resizeCanvas();
+    resize();
     let resizeRaf = null;
     window.addEventListener('resize', () => {
-        if (resizeRaf != null) return;
-        resizeRaf = requestAnimationFrame(() => {
-            resizeRaf = null;
-            resizeCanvas();
-        });
+        if (resizeRaf) return;
+        resizeRaf = requestAnimationFrame(() => { resizeRaf = null; resize(); });
     }, { passive: true });
 
     const stars = [];
-    const MAX_STARS = 80;
+    const MAX_STARS = 40;
 
     class Star {
         constructor(x, y) {
             this.x = x; this.y = y;
-            this.size = Math.random() * 2.5 + 1.5;
+            this.size = Math.random() * 2 + 1;
             this.speedX = (Math.random() - 0.5) * 1.6;
             this.speedY = (Math.random() - 0.5) * 1.6;
             this.life = 1;
-            this.decay = Math.random() * 0.04 + 0.02;
-            this.color = `hsl(${Math.random() * 60 + 180}, 100%, ${Math.random() * 30 + 60}%)`;
+            this.decay = Math.random() * 0.05 + 0.02;
+            this.color = `hsl(${Math.random() * 60 + 180},100%,${Math.random() * 30 + 60}%)`;
         }
-        update() { this.x += this.speedX; this.y += this.speedY; this.life -= this.decay; this.size *= 0.98; }
+        update() { this.x += this.speedX; this.y += this.speedY; this.life -= this.decay; this.size *= 0.97; }
         draw() {
             ctx.globalAlpha = this.life;
             ctx.fillStyle = this.color;
@@ -549,54 +339,31 @@ function setupMagicCursor() {
         }
     }
 
-    let pointerRaf = null;
-    let lastPointer = null;
+    let rafId = null, pointerRaf = null, lastPointer = null;
 
-    function spawnStars(x, y) {
-        stars.push(new Star(x, y));
-        while (stars.length > MAX_STARS) stars.shift();
-    }
-
-    document.addEventListener('pointermove', (e) => {
+    document.addEventListener('pointermove', e => {
         lastPointer = { x: e.clientX, y: e.clientY };
-        if (pointerRaf != null) return;
+        if (pointerRaf) return;
         pointerRaf = requestAnimationFrame(() => {
             pointerRaf = null;
             if (!lastPointer) return;
-            spawnStars(lastPointer.x, lastPointer.y);
-            start();
+            stars.push(new Star(lastPointer.x, lastPointer.y));
+            if (stars.length > MAX_STARS) stars.shift();
+            if (!rafId) animate();
         });
     }, { passive: true });
-
-    let rafId = null;
 
     function animate() {
         ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
         for (let i = stars.length - 1; i >= 0; i--) {
-            stars[i].update();
-            stars[i].draw();
+            stars[i].update(); stars[i].draw();
             if (stars[i].life <= 0) stars.splice(i, 1);
         }
-        if (stars.length === 0) {
-            rafId = null;
-            return;
-        }
-        rafId = requestAnimationFrame(animate);
+        rafId = stars.length ? requestAnimationFrame(animate) : null;
     }
 
-    const start = () => {
-        if (rafId != null) return;
-        animate();
-    };
-
-    const stop = () => {
-        if (rafId == null) return;
-        cancelAnimationFrame(rafId);
-        rafId = null;
-    };
-
     document.addEventListener('visibilitychange', () => {
-        if (document.hidden) stop();
-        else if (stars.length > 0) start();
+        if (document.hidden && rafId) { cancelAnimationFrame(rafId); rafId = null; }
+        else if (!document.hidden && stars.length && !rafId) animate();
     });
 }
