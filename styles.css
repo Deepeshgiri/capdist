@@ -128,9 +128,9 @@ body {
     z-index: 2;
     pointer-events: none;
 }
-.theme-1 .slide-overlay { background: rgba(10, 6, 40, 0.55); }
-.theme-2 .slide-overlay { background: rgba(30, 0, 50, 0.55); }
-.theme-3 .slide-overlay { background: rgba(5, 20, 10, 0.55); }
+.theme-1 .slide-overlay { background: transparent; }
+.theme-2 .slide-overlay { background: transparent; }
+.theme-3 .slide-overlay { background: transparent; }
 
 /* ─── Theme label ───────────────────────────────────────── */
 .theme-label {
