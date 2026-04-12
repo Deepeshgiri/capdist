@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CAP彡DIST — Snake</title>
+  <title>CAP彡DIST — Multiplayer Snake</title>
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
     body {
       background: #0a0a0f;
       display: flex;
@@ -16,98 +16,108 @@
       min-height: 100vh;
       font-family: 'Segoe UI', sans-serif;
       color: #fff;
-      padding: 16px;
-      gap: 12px;
+      padding: 12px;
+      gap: 10px;
       user-select: none;
     }
 
-    /* ── Header ── */
     .header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       width: 100%;
-      max-width: 380px;
+      max-width: 420px;
     }
     .title {
-      font-size: 1.1rem;
+      font-size: 1rem;
       letter-spacing: 3px;
+      font-weight: 700;
       background: linear-gradient(90deg, #a78bfa, #60a5fa);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      font-weight: 700;
     }
     #back {
       color: #a78bfa;
       text-decoration: none;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       letter-spacing: 1px;
       opacity: 0.6;
       transition: opacity 0.2s;
     }
     #back:hover { opacity: 1; }
 
-    /* ── Score bar ── */
-    .scorebar {
+    /* scoreboard */
+    #scoreboard {
       display: flex;
-      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px;
       width: 100%;
-      max-width: 380px;
-      font-size: 0.8rem;
-      letter-spacing: 2px;
+      max-width: 420px;
+      min-height: 28px;
     }
-    .scorebar span { color: #a78bfa; }
-    .scorebar .best { color: #60a5fa; }
+    .sb-entry {
+      font-size: 0.72rem;
+      letter-spacing: 1px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.05);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .sb-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .sb-dead { opacity: 0.35; text-decoration: line-through; }
 
-    /* ── Canvas wrapper ── */
+    /* canvas */
     .canvas-wrap {
       position: relative;
       width: 100%;
-      max-width: 380px;
+      max-width: 420px;
       aspect-ratio: 1;
     }
     canvas {
       width: 100%;
       height: 100%;
-      border: 2px solid rgba(167,139,250,0.35);
+      border: 2px solid rgba(167,139,250,0.3);
       border-radius: 12px;
-      box-shadow: 0 0 40px rgba(167,139,250,0.15);
+      box-shadow: 0 0 40px rgba(167,139,250,0.12);
       background: #0d0d1a;
       display: block;
     }
 
-    /* ── Overlay ── */
+    /* overlay */
     .overlay {
       position: absolute;
       inset: 0;
       border-radius: 12px;
-      background: rgba(10,10,20,0.88);
+      background: rgba(10,10,20,0.9);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 14px;
-      backdrop-filter: blur(4px);
-      transition: opacity 0.2s;
+      gap: 12px;
+      backdrop-filter: blur(6px);
+      transition: opacity 0.25s;
     }
     .overlay.hidden { opacity: 0; pointer-events: none; }
-    .overlay-title {
-      font-size: 1.5rem;
+    .ov-title {
+      font-size: 1.4rem;
       font-weight: 700;
       letter-spacing: 3px;
       background: linear-gradient(90deg, #a78bfa, #60a5fa);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
-    .overlay-sub {
-      font-size: 0.8rem;
+    .ov-sub {
+      font-size: 0.78rem;
       color: #94a3b8;
       letter-spacing: 1px;
       text-align: center;
-      line-height: 1.6;
+      line-height: 1.7;
     }
-    .overlay-score {
-      font-size: 1rem;
+    .ov-status {
+      font-size: 0.8rem;
       color: #f472b6;
       letter-spacing: 2px;
     }
@@ -117,49 +127,58 @@
       border-radius: 8px;
       background: linear-gradient(135deg, #a78bfa, #60a5fa);
       color: #fff;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       font-weight: 600;
       letter-spacing: 2px;
       cursor: pointer;
-      transition: transform 0.1s, box-shadow 0.2s;
       box-shadow: 0 0 20px rgba(167,139,250,0.4);
+      transition: transform 0.1s, box-shadow 0.2s;
     }
     .btn:hover { transform: scale(1.05); box-shadow: 0 0 30px rgba(167,139,250,0.6); }
     .btn:active { transform: scale(0.97); }
 
-    /* ── Pause button ── */
-    #pauseBtn {
+    /* respawn bar */
+    #respawnWrap {
       position: absolute;
-      top: 10px;
-      right: 10px;
-      background: rgba(167,139,250,0.15);
-      border: 1px solid rgba(167,139,250,0.3);
-      color: #a78bfa;
-      border-radius: 6px;
-      padding: 4px 10px;
-      font-size: 0.75rem;
-      cursor: pointer;
-      letter-spacing: 1px;
-      transition: background 0.2s;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
     }
-    #pauseBtn:hover { background: rgba(167,139,250,0.3); }
+    #respawnWrap.show { display: flex; }
+    #respawnLabel { font-size: 0.72rem; color: #94a3b8; letter-spacing: 1px; }
+    #respawnBar {
+      width: 120px;
+      height: 4px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    #respawnFill {
+      height: 100%;
+      background: linear-gradient(90deg, #a78bfa, #60a5fa);
+      width: 100%;
+      transition: width 0.1s linear;
+    }
 
-    /* ── D-pad ── */
+    /* dpad */
     .dpad {
       display: grid;
       grid-template-areas: ". up ." "left . right" ". down .";
       gap: 6px;
+      max-width: 170px;
       width: 100%;
-      max-width: 180px;
     }
     .dpad-btn {
-      width: 52px;
-      height: 52px;
-      border: 1px solid rgba(167,139,250,0.35);
+      width: 50px; height: 50px;
+      border: 1px solid rgba(167,139,250,0.3);
       border-radius: 10px;
-      background: rgba(167,139,250,0.1);
+      background: rgba(167,139,250,0.08);
       color: #a78bfa;
-      font-size: 1.3rem;
+      font-size: 1.2rem;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -167,17 +186,29 @@
       transition: background 0.15s, transform 0.1s;
       -webkit-tap-highlight-color: transparent;
     }
-    .dpad-btn:active { background: rgba(167,139,250,0.35); transform: scale(0.92); }
+    .dpad-btn:active { background: rgba(167,139,250,0.3); transform: scale(0.92); }
     .dpad-btn.up    { grid-area: up; }
     .dpad-btn.left  { grid-area: left; }
     .dpad-btn.right { grid-area: right; }
     .dpad-btn.down  { grid-area: down; }
 
-    .hint {
-      font-size: 0.7rem;
-      color: #475569;
+    .hint { font-size: 0.68rem; color: #334155; letter-spacing: 1px; }
+
+    /* connection pill */
+    #connPill {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 0.65rem;
       letter-spacing: 1px;
+      padding: 3px 8px;
+      border-radius: 20px;
+      background: rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: #64748b;
     }
+    #connPill.host { color: #a78bfa; border-color: rgba(167,139,250,0.3); }
+    #connPill.peer { color: #60a5fa; border-color: rgba(96,165,250,0.3); }
   </style>
 </head>
 <body>
@@ -187,39 +218,40 @@
     <a href="../profile.html" id="back">← Profile</a>
   </div>
 
-  <div class="scorebar">
-    <span>SCORE: <b id="scoreVal">0</b></span>
-    <span class="best">BEST: <b id="bestVal">0</b></span>
-  </div>
+  <div id="scoreboard"></div>
 
   <div class="canvas-wrap">
     <canvas id="c" width="400" height="400"></canvas>
+    <div id="connPill">connecting…</div>
 
-    <button id="pauseBtn" style="display:none">⏸ PAUSE</button>
-
-    <!-- Start overlay -->
-    <div class="overlay" id="startOverlay">
-      <div class="overlay-title">🐍 SNAKE</div>
-      <div class="overlay-sub">Eat the pink dots.<br>Don't hit the walls or yourself.</div>
-      <button class="btn" id="startBtn">▶ PLAY</button>
-      <div class="overlay-sub hint">Arrow keys / WASD · P to pause</div>
+    <!-- respawn bar -->
+    <div id="respawnWrap">
+      <div id="respawnLabel">respawning…</div>
+      <div id="respawnBar"><div id="respawnFill"></div></div>
     </div>
 
-    <!-- Pause overlay -->
-    <div class="overlay hidden" id="pauseOverlay">
-      <div class="overlay-title">⏸ PAUSED</div>
-      <button class="btn" id="resumeBtn">▶ RESUME</button>
+    <!-- connecting overlay -->
+    <div class="overlay" id="connectingOverlay">
+      <div class="ov-title">🐍 SNAKE</div>
+      <div class="ov-status" id="connStatus">Connecting to room…</div>
+      <div class="ov-sub">Share this page with friends<br>Everyone joins the same game</div>
     </div>
 
-    <!-- Game over overlay -->
-    <div class="overlay hidden" id="gameoverOverlay">
-      <div class="overlay-title">GAME OVER</div>
-      <div class="overlay-score" id="finalScore"></div>
-      <button class="btn" id="retryBtn">↺ RETRY</button>
+    <!-- ready overlay -->
+    <div class="overlay hidden" id="readyOverlay">
+      <div class="ov-title">READY!</div>
+      <div class="ov-sub" id="playerCount">1 player connected</div>
+      <button class="btn" id="readyBtn">▶ START</button>
+      <div class="ov-sub hint">Arrow keys / WASD · P = pause</div>
+    </div>
+
+    <!-- dead overlay (brief) -->
+    <div class="overlay hidden" id="deadOverlay">
+      <div class="ov-title">💀 YOU DIED</div>
+      <div class="ov-sub" id="deadScore"></div>
     </div>
   </div>
 
-  <!-- D-pad for mobile -->
   <div class="dpad">
     <button class="dpad-btn up"    data-dir="up">▲</button>
     <button class="dpad-btn left"  data-dir="left">◀</button>
@@ -229,176 +261,489 @@
 
   <div class="hint">Arrow keys / WASD · P = pause</div>
 
-  <script>
-    const canvas = document.getElementById('c');
-    const ctx = canvas.getContext('2d');
-    const scoreVal = document.getElementById('scoreVal');
-    const bestVal  = document.getElementById('bestVal');
-    const finalScore = document.getElementById('finalScore');
-    const pauseBtn = document.getElementById('pauseBtn');
+<script>
+// ── Constants ──────────────────────────────────────────────
+const ROOM_HOST_ID = 'capdist-snake-room-v1';
+const COLS = 20, ROWS = 20;
+const CANVAS_SIZE = 400;
+const S = CANVAS_SIZE / COLS;
+const TICK_MS = 130;
+const RESPAWN_MS = 3000;
+const COLORS = ['#a78bfa','#60a5fa','#f472b6','#34d399','#fbbf24','#f87171','#38bdf8','#c084fc'];
 
-    const startOverlay   = document.getElementById('startOverlay');
-    const pauseOverlay   = document.getElementById('pauseOverlay');
-    const gameoverOverlay = document.getElementById('gameoverOverlay');
+// ── State ──────────────────────────────────────────────────
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
 
-    const COLS = 20, ROWS = 20;
-    const S = canvas.width / COLS;
+let myId = null;           // our peer id (random)
+let myColor = null;
+let myName = null;
+let isHost = false;
+let peer = null;
+let hostConn = null;       // guest → host connection
+let guestConns = {};       // host → guest connections  { peerId: conn }
 
-    let snake, dir, next, food, score, loop, running = false, paused = false;
-    let best = parseInt(localStorage.getItem('snakeBest') || '0');
-    bestVal.textContent = best;
+// Shared game state (host is source of truth)
+let gameState = {
+  running: false,
+  food: {x:5, y:5},
+  players: {}
+  // players[id] = { id, name, color, snake, dir, next, score, alive, respawnAt }
+};
 
-    function init() {
-      snake = [{x:10,y:10},{x:9,y:10},{x:8,y:10}];
-      dir = {x:1,y:0}; next = {x:1,y:0};
-      score = 0; scoreVal.textContent = 0;
-      placeFood();
-    }
+let myDir = {x:1, y:0};
+let myNext = {x:1, y:0};
+let tickInterval = null;
+let animFrame = null;
 
-    function placeFood() {
-      do { food = {x: Math.floor(Math.random()*COLS), y: Math.floor(Math.random()*ROWS)}; }
-      while (snake.some(s => s.x===food.x && s.y===food.y));
-    }
+// ── UI refs ────────────────────────────────────────────────
+const connectingOverlay = document.getElementById('connectingOverlay');
+const readyOverlay       = document.getElementById('readyOverlay');
+const deadOverlay        = document.getElementById('deadOverlay');
+const connStatus         = document.getElementById('connStatus');
+const connPill           = document.getElementById('connPill');
+const playerCountEl      = document.getElementById('playerCount');
+const readyBtn           = document.getElementById('readyBtn');
+const respawnWrap        = document.getElementById('respawnWrap');
+const respawnFill        = document.getElementById('respawnFill');
+const deadScore          = document.getElementById('deadScore');
 
-    function speed() { return Math.max(65, 130 - score * 4); }
+// ── Helpers ────────────────────────────────────────────────
+function randomName() {
+  const adj = ['Swift','Neon','Ghost','Cyber','Void','Blaze','Storm','Pixel'];
+  const noun = ['Viper','Cobra','Mamba','Asp','Boa','Python','Adder','Krait'];
+  return adj[Math.floor(Math.random()*adj.length)] + noun[Math.floor(Math.random()*noun.length)];
+}
 
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+function assignColor(id) {
+  const used = Object.values(gameState.players).map(p => p.color);
+  return COLORS.find(c => !used.includes(c)) || COLORS[Math.floor(Math.random()*COLORS.length)];
+}
 
-      // grid dots
-      ctx.fillStyle = 'rgba(255,255,255,0.04)';
-      for (let x = 0; x < COLS; x++)
-        for (let y = 0; y < ROWS; y++)
-          ctx.fillRect(x*S + S/2 - 1, y*S + S/2 - 1, 2, 2);
+function spawnPos() {
+  const margin = 3;
+  return {
+    x: margin + Math.floor(Math.random() * (COLS - margin*2)),
+    y: margin + Math.floor(Math.random() * (ROWS - margin*2))
+  };
+}
 
-      // food pulse
-      const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 200);
-      ctx.fillStyle = '#f472b6';
-      ctx.shadowColor = '#f472b6';
-      ctx.shadowBlur = 8 + pulse * 10;
+function makeSnake(pos) {
+  return [pos, {x: pos.x-1, y: pos.y}, {x: pos.x-2, y: pos.y}];
+}
+
+function placeFood(players) {
+  const occupied = Object.values(players).flatMap(p => p.snake || []);
+  let f;
+  do { f = {x: Math.floor(Math.random()*COLS), y: Math.floor(Math.random()*ROWS)}; }
+  while (occupied.some(s => s.x===f.x && s.y===f.y));
+  return f;
+}
+
+function updateScoreboard() {
+  const sb = document.getElementById('scoreboard');
+  sb.innerHTML = '';
+  Object.values(gameState.players).sort((a,b) => b.score - a.score).forEach(p => {
+    const el = document.createElement('div');
+    el.className = 'sb-entry' + (p.alive ? '' : ' sb-dead');
+    el.innerHTML = `<div class="sb-dot" style="background:${p.color}"></div>${p.name}: ${p.score}`;
+    sb.appendChild(el);
+  });
+}
+
+function updatePlayerCountUI() {
+  const n = Object.keys(gameState.players).length;
+  playerCountEl.textContent = `${n} player${n!==1?'s':''} connected`;
+}
+
+// ── Drawing ────────────────────────────────────────────────
+function draw() {
+  ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+  // grid dots
+  ctx.fillStyle = 'rgba(255,255,255,0.04)';
+  for (let x=0; x<COLS; x++)
+    for (let y=0; y<ROWS; y++)
+      ctx.fillRect(x*S+S/2-1, y*S+S/2-1, 2, 2);
+
+  // food
+  const pulse = 0.5 + 0.5*Math.sin(Date.now()/200);
+  ctx.fillStyle = '#f472b6';
+  ctx.shadowColor = '#f472b6';
+  ctx.shadowBlur = 8 + pulse*10;
+  ctx.beginPath();
+  ctx.arc(gameState.food.x*S+S/2, gameState.food.y*S+S/2, S/2-3+pulse, 0, Math.PI*2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // snakes
+  Object.values(gameState.players).forEach(p => {
+    if (!p.snake || !p.alive) return;
+    p.snake.forEach((seg, i) => {
+      const t = i / p.snake.length;
+      ctx.globalAlpha = 1 - t*0.4;
+      ctx.fillStyle = p.color;
+      ctx.shadowColor = i===0 ? p.color : 'transparent';
+      ctx.shadowBlur  = i===0 ? 12 : 0;
       ctx.beginPath();
-      ctx.arc(food.x*S + S/2, food.y*S + S/2, S/2 - 3 + pulse, 0, Math.PI*2);
+      ctx.roundRect(seg.x*S+1.5, seg.y*S+1.5, S-3, S-3, 5);
       ctx.fill();
-      ctx.shadowBlur = 0;
-
-      // snake
-      snake.forEach((seg, i) => {
-        const t = i / snake.length;
-        ctx.fillStyle = i === 0 ? '#a78bfa' : `hsl(${220 + t*60}, 75%, ${62 - t*18}%)`;
-        ctx.shadowColor = i === 0 ? '#a78bfa' : 'transparent';
-        ctx.shadowBlur  = i === 0 ? 12 : 0;
-        ctx.beginPath();
-        ctx.roundRect(seg.x*S + 1.5, seg.y*S + 1.5, S - 3, S - 3, 5);
-        ctx.fill();
-      });
-      ctx.shadowBlur = 0;
-
-      // eyes on head
-      const h = snake[0];
-      ctx.fillStyle = '#0a0a0f';
-      const ex = dir.x, ey = dir.y;
-      const cx = h.x*S + S/2, cy = h.y*S + S/2;
-      const perp = {x: -ey, y: ex};
-      [[1,-1],[1,1]].forEach(([f,p]) => {
-        ctx.beginPath();
-        ctx.arc(cx + ex*S*0.22 + perp.x*S*0.18*p, cy + ey*S*0.22 + perp.y*S*0.18*p, 2.2, 0, Math.PI*2);
-        ctx.fill();
-      });
-    }
-
-    function tick() {
-      dir = next;
-      const head = {x: snake[0].x + dir.x, y: snake[0].y + dir.y};
-      if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS ||
-          snake.some(s => s.x === head.x && s.y === head.y)) {
-        endGame(); return;
-      }
-      snake.unshift(head);
-      if (head.x === food.x && head.y === food.y) {
-        score++;
-        scoreVal.textContent = score;
-        if (score > best) { best = score; bestVal.textContent = best; localStorage.setItem('snakeBest', best); }
-        placeFood();
-        clearInterval(loop);
-        loop = setInterval(tick, speed());
-      } else snake.pop();
-      draw();
-    }
-
-    function startGame() {
-      init(); draw();
-      startOverlay.classList.add('hidden');
-      gameoverOverlay.classList.add('hidden');
-      pauseBtn.style.display = 'block';
-      running = true; paused = false;
-      loop = setInterval(tick, speed());
-    }
-
-    function endGame() {
-      clearInterval(loop); running = false;
-      pauseBtn.style.display = 'none';
-      finalScore.textContent = `SCORE: ${score}${score >= best && score > 0 ? '  🏆 NEW BEST!' : ''}`;
-      gameoverOverlay.classList.remove('hidden');
-    }
-
-    function togglePause() {
-      if (!running) return;
-      if (!paused) {
-        clearInterval(loop); paused = true;
-        pauseOverlay.classList.remove('hidden');
-        pauseBtn.textContent = '▶ RESUME';
-      } else {
-        paused = false;
-        pauseOverlay.classList.add('hidden');
-        pauseBtn.textContent = '⏸ PAUSE';
-        loop = setInterval(tick, speed());
-      }
-    }
-
-    // Buttons
-    document.getElementById('startBtn').addEventListener('click', startGame);
-    document.getElementById('retryBtn').addEventListener('click', startGame);
-    document.getElementById('resumeBtn').addEventListener('click', togglePause);
-    pauseBtn.addEventListener('click', togglePause);
-
-    // Keyboard
-    document.addEventListener('keydown', e => {
-      if (e.code === 'Space' || e.code === 'Enter') {
-        if (!running) startGame();
-        return;
-      }
-      if (e.code === 'KeyP') { togglePause(); return; }
-      if (e.code === 'Escape') { if (running && !paused) togglePause(); return; }
-      const map = {
-        ArrowUp:{x:0,y:-1}, ArrowDown:{x:0,y:1}, ArrowLeft:{x:-1,y:0}, ArrowRight:{x:1,y:0},
-        KeyW:{x:0,y:-1}, KeyS:{x:0,y:1}, KeyA:{x:-1,y:0}, KeyD:{x:1,y:0}
-      };
-      const d = map[e.code];
-      if (d && !(d.x === -dir.x && d.y === -dir.y)) {
-        next = d;
-        if (paused) togglePause(); // resume on direction key
-      }
-      if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
     });
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
 
-    // D-pad
-    document.querySelectorAll('.dpad-btn').forEach(btn => {
-      const press = () => {
-        const map = { up:{x:0,y:-1}, down:{x:0,y:1}, left:{x:-1,y:0}, right:{x:1,y:0} };
-        const d = map[btn.dataset.dir];
-        if (!running) { startGame(); return; }
-        if (d && !(d.x === -dir.x && d.y === -dir.y)) next = d;
-        if (paused) togglePause();
-      };
-      btn.addEventListener('click', press);
-      btn.addEventListener('touchstart', e => { e.preventDefault(); press(); }, {passive:false});
+    // name tag above head
+    const head = p.snake[0];
+    ctx.fillStyle = p.color;
+    ctx.font = `bold ${S*0.55}px Segoe UI`;
+    ctx.textAlign = 'center';
+    ctx.fillText(p.name.slice(0,8), head.x*S+S/2, head.y*S-3);
+
+    // eyes
+    const d = p.dir || {x:1,y:0};
+    const perp = {x:-d.y, y:d.x};
+    const cx = head.x*S+S/2, cy = head.y*S+S/2;
+    ctx.fillStyle = '#0a0a0f';
+    ctx.globalAlpha = 1;
+    [1,-1].forEach(side => {
+      ctx.beginPath();
+      ctx.arc(cx+d.x*S*0.22+perp.x*S*0.18*side, cy+d.y*S*0.22+perp.y*S*0.18*side, 2, 0, Math.PI*2);
+      ctx.fill();
     });
+  });
 
-    // Animate food pulse even when idle
-    function animLoop() { if (running && !paused) draw(); requestAnimationFrame(animLoop); }
-    animLoop();
+  ctx.textAlign = 'left';
+  updateScoreboard();
+  animFrame = requestAnimationFrame(draw);
+}
 
-    init(); draw();
-  </script>
+// ── Game tick (host only) ──────────────────────────────────
+function gameTick() {
+  const players = gameState.players;
+  const now = Date.now();
+
+  // respawn dead players
+  Object.values(players).forEach(p => {
+    if (!p.alive && p.respawnAt && now >= p.respawnAt) {
+      const pos = spawnPos();
+      p.snake = makeSnake(pos);
+      p.dir = {x:1,y:0};
+      p.next = {x:1,y:0};
+      p.alive = true;
+      p.respawnAt = null;
+    }
+  });
+
+  // move each snake
+  Object.values(players).forEach(p => {
+    if (!p.alive) return;
+    p.dir = p.next;
+    const head = {x: p.snake[0].x+p.dir.x, y: p.snake[0].y+p.dir.y};
+
+    // wall collision
+    if (head.x<0||head.x>=COLS||head.y<0||head.y>=ROWS) { killPlayer(p, now); return; }
+
+    // self collision
+    if (p.snake.some(s=>s.x===head.x&&s.y===head.y)) { killPlayer(p, now); return; }
+
+    // collision with other snakes
+    let hitOther = false;
+    Object.values(players).forEach(other => {
+      if (other.id===p.id||!other.alive) return;
+      if (other.snake.some(s=>s.x===head.x&&s.y===head.y)) hitOther=true;
+    });
+    if (hitOther) { killPlayer(p, now); return; }
+
+    p.snake.unshift(head);
+    if (head.x===gameState.food.x && head.y===gameState.food.y) {
+      p.score++;
+      gameState.food = placeFood(players);
+    } else {
+      p.snake.pop();
+    }
+  });
+
+  broadcast({ type:'state', state: gameState });
+}
+
+function killPlayer(p, now) {
+  p.alive = false;
+  p.snake = [];
+  p.respawnAt = now + RESPAWN_MS;
+}
+
+// ── Broadcast (host → all guests) ─────────────────────────
+function broadcast(msg) {
+  const data = JSON.stringify(msg);
+  Object.values(guestConns).forEach(conn => { try { conn.send(data); } catch(e){} });
+  // also apply locally
+  handleMessage(msg);
+}
+
+// ── Send to host (guest → host) ────────────────────────────
+function sendToHost(msg) {
+  if (isHost) {
+    handleHostMessage(msg, myId);
+  } else if (hostConn && hostConn.open) {
+    hostConn.send(JSON.stringify(msg));
+  }
+}
+
+// ── Message handling ───────────────────────────────────────
+function handleMessage(msg) {
+  if (msg.type === 'state') {
+    gameState = msg.state;
+    // sync my own dir from state
+    if (gameState.players[myId]) {
+      myDir = gameState.players[myId].dir || myDir;
+    }
+    // check if I just died
+    const me = gameState.players[myId];
+    if (me && !me.alive && me.respawnAt) {
+      showRespawn(me.respawnAt);
+    } else {
+      hideRespawn();
+    }
+  }
+}
+
+// host processes messages from guests
+function handleHostMessage(msg, fromId) {
+  if (msg.type === 'join') {
+    const color = assignColor(fromId);
+    const pos = spawnPos();
+    gameState.players[fromId] = {
+      id: fromId,
+      name: msg.name,
+      color,
+      snake: makeSnake(pos),
+      dir: {x:1,y:0},
+      next: {x:1,y:0},
+      score: 0,
+      alive: true,
+      respawnAt: null
+    };
+    updatePlayerCountUI();
+    // send full state back to everyone
+    broadcast({ type:'state', state: gameState });
+    // if game already running, tell new player
+    if (gameState.running) {
+      broadcast({ type:'state', state: gameState });
+    }
+  }
+
+  if (msg.type === 'dir') {
+    const p = gameState.players[fromId];
+    if (p && p.alive) {
+      const d = msg.dir;
+      if (!(d.x===-p.dir.x && d.y===-p.dir.y)) p.next = d;
+    }
+  }
+
+  if (msg.type === 'start' && !gameState.running) {
+    gameState.running = true;
+    tickInterval = setInterval(gameTick, TICK_MS);
+    broadcast({ type:'state', state: gameState });
+  }
+
+  if (msg.type === 'leave') {
+    delete gameState.players[fromId];
+    delete guestConns[fromId];
+    updatePlayerCountUI();
+    broadcast({ type:'state', state: gameState });
+  }
+}
+
+// ── Respawn UI ─────────────────────────────────────────────
+let respawnTimer = null;
+function showRespawn(respawnAt) {
+  deadOverlay.classList.remove('hidden');
+  const me = gameState.players[myId];
+  deadScore.textContent = me ? `Score: ${me.score}` : '';
+  respawnWrap.classList.add('show');
+  clearInterval(respawnTimer);
+  respawnTimer = setInterval(() => {
+    const remaining = respawnAt - Date.now();
+    if (remaining <= 0) {
+      hideRespawn();
+      deadOverlay.classList.add('hidden');
+      clearInterval(respawnTimer);
+      return;
+    }
+    respawnFill.style.width = (remaining / RESPAWN_MS * 100) + '%';
+  }, 50);
+}
+function hideRespawn() {
+  respawnWrap.classList.remove('show');
+  deadOverlay.classList.add('hidden');
+  clearInterval(respawnTimer);
+}
+
+// ── PeerJS setup ───────────────────────────────────────────
+function setupAsPeer() {
+  // try to connect to fixed host id
+  hostConn = peer.connect(ROOM_HOST_ID, { reliable: true });
+
+  hostConn.on('open', () => {
+    isHost = false;
+    connPill.textContent = '● PEER';
+    connPill.className = 'peer';
+    connStatus.textContent = 'Joined room!';
+    connectingOverlay.classList.add('hidden');
+    readyOverlay.classList.remove('hidden');
+
+    // send join
+    hostConn.send(JSON.stringify({ type:'join', name: myName }));
+  });
+
+  hostConn.on('data', raw => {
+    const msg = JSON.parse(raw);
+    handleMessage(msg);
+    if (msg.type === 'state' && msg.state.running) {
+      readyOverlay.classList.add('hidden');
+    }
+  });
+
+  hostConn.on('close', () => {
+    // host left — try to become host
+    connStatus.textContent = 'Host left. Reconnecting…';
+    connectingOverlay.classList.remove('hidden');
+    setTimeout(() => tryBecomeHost(), 1500);
+  });
+
+  hostConn.on('error', () => {
+    // no host yet — become host
+    tryBecomeHost();
+  });
+}
+
+function tryBecomeHost() {
+  // destroy current peer and create one with fixed host id
+  if (peer && !peer.destroyed) peer.destroy();
+
+  peer = new Peer(ROOM_HOST_ID, { debug: 0 });
+
+  peer.on('open', id => {
+    isHost = true;
+    myId = id;
+    connPill.textContent = '★ HOST';
+    connPill.className = 'host';
+    connStatus.textContent = 'You are the host!';
+
+    // add myself to game state
+    const color = COLORS[0];
+    myColor = color;
+    const pos = spawnPos();
+    gameState.players[myId] = {
+      id: myId,
+      name: myName,
+      color,
+      snake: makeSnake(pos),
+      dir: {x:1,y:0},
+      next: {x:1,y:0},
+      score: 0,
+      alive: true,
+      respawnAt: null
+    };
+
+    connectingOverlay.classList.add('hidden');
+    readyOverlay.classList.remove('hidden');
+    updatePlayerCountUI();
+
+    // accept guest connections
+    peer.on('connection', conn => {
+      conn.on('open', () => {
+        guestConns[conn.peer] = conn;
+        conn.on('data', raw => {
+          const msg = JSON.parse(raw);
+          handleHostMessage(msg, conn.peer);
+        });
+        conn.on('close', () => {
+          handleHostMessage({ type:'leave' }, conn.peer);
+        });
+      });
+    });
+  });
+
+  peer.on('error', err => {
+    if (err.type === 'unavailable-id') {
+      // someone else is already host, connect as peer
+      peer.destroy();
+      initPeer();
+    }
+  });
+}
+
+function initPeer() {
+  // create peer with random id first
+  peer = new Peer({ debug: 0 });
+  peer.on('open', id => {
+    myId = id;
+    myColor = COLORS[Math.floor(Math.random() * COLORS.length)];
+    setupAsPeer();
+  });
+  peer.on('error', err => {
+    connStatus.textContent = 'Connection error. Retrying…';
+    setTimeout(initPeer, 2000);
+  });
+}
+
+// ── Controls ───────────────────────────────────────────────
+function setDir(d) {
+  if (!gameState.running) return;
+  const cur = gameState.players[myId]?.dir || {x:1,y:0};
+  if (d.x===-cur.x && d.y===-cur.y) return;
+  myNext = d;
+  sendToHost({ type:'dir', dir: d });
+}
+
+document.addEventListener('keydown', e => {
+  const map = {
+    ArrowUp:{x:0,y:-1}, ArrowDown:{x:0,y:1}, ArrowLeft:{x:-1,y:0}, ArrowRight:{x:1,y:0},
+    KeyW:{x:0,y:-1}, KeyS:{x:0,y:1}, KeyA:{x:-1,y:0}, KeyD:{x:1,y:0}
+  };
+  if (map[e.code]) { setDir(map[e.code]); e.preventDefault(); }
+  if (e.code === 'KeyP') togglePause();
+});
+
+document.querySelectorAll('.dpad-btn').forEach(btn => {
+  const press = () => {
+    const map = { up:{x:0,y:-1}, down:{x:0,y:1}, left:{x:-1,y:0}, right:{x:1,y:0} };
+    setDir(map[btn.dataset.dir]);
+  };
+  btn.addEventListener('click', press);
+  btn.addEventListener('touchstart', e => { e.preventDefault(); press(); }, {passive:false});
+});
+
+// pause (host only for now — pauses for everyone)
+function togglePause() {
+  if (!isHost || !gameState.running) return;
+  if (tickInterval) {
+    clearInterval(tickInterval);
+    tickInterval = null;
+    broadcast({ type:'state', state: { ...gameState, paused: true } });
+  } else {
+    tickInterval = setInterval(gameTick, TICK_MS);
+    broadcast({ type:'state', state: { ...gameState, paused: false } });
+  }
+}
+
+readyBtn.addEventListener('click', () => {
+  sendToHost({ type:'start' });
+  readyOverlay.classList.add('hidden');
+});
+
+// ── Boot ───────────────────────────────────────────────────
+myName = randomName();
+connStatus.textContent = 'Connecting to room…';
+draw();
+initPeer();
+
+// cleanup on leave
+window.addEventListener('beforeunload', () => {
+  if (!isHost) sendToHost({ type:'leave' });
+  if (peer) peer.destroy();
+});
+</script>
 </body>
 </html>
