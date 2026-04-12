@@ -534,7 +534,6 @@ function broadcastMyState() {
 }
 
 function broadcastFood() {
-  if (!isHost) return;
   connections.forEach(conn => {
     if (conn.open) conn.send({ type: 'food', food: food });
   });
@@ -591,16 +590,9 @@ function tick() {
 
   if (head.x === food.x && head.y === food.y) {
     myScore++;
-    if (isHost) {
-      const allSnakes = [mySnake, ...others.map(p => p.snake).filter(Boolean)];
-      food = newFood(allSnakes);
-      broadcastFood();
-    } else {
-      // Client notifies host to generate new food
-      connections.forEach(conn => {
-        if (conn.open) conn.send({ type: 'ate', id: myId });
-      });
-    }
+    const allSnakes = [mySnake, ...others.map(p => p.snake).filter(Boolean)];
+    food = newFood(allSnakes);
+    broadcastFood();
   } else {
     mySnake.pop();
   }
