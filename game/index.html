@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CAP彡DIST — Multiplayer Snake</title>
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <title>CAP彡DIST — P2P Multiplayer Snake</title>
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -99,6 +99,7 @@
       font-size: 1.5rem; font-weight: 700; letter-spacing: 3px;
       background: linear-gradient(90deg, #a78bfa, #60a5fa);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      text-align: center;
     }
     .ov-sub {
       font-size: 0.78rem; color: #94a3b8;
@@ -114,6 +115,10 @@
     }
     .btn:hover { transform: scale(1.05); }
     .btn:active { transform: scale(0.97); }
+    .btn.secondary {
+      background: linear-gradient(135deg, #475569, #334155);
+      box-shadow: 0 0 20px rgba(71,85,105,0.4);
+    }
 
     /* status pill */
     #statusPill {
@@ -171,16 +176,15 @@
 
     .hint { font-size: 0.68rem; color: #334155; letter-spacing: 1px; }
 
-    /* name input */
-    #nameInput {
+    input {
       background: rgba(255,255,255,0.06);
       border: 1px solid rgba(167,139,250,0.4);
       border-radius: 8px; color: #fff;
       font-size: 0.9rem; padding: 8px 14px;
       text-align: center; letter-spacing: 2px;
-      outline: none; width: 200px;
+      outline: none; width: 220px;
     }
-    #nameInput:focus { border-color: #a78bfa; }
+    input:focus { border-color: #a78bfa; }
   </style>
 </head>
 <body>
@@ -194,27 +198,48 @@
 
 <div class="canvas-wrap">
   <canvas id="c" width="400" height="400"></canvas>
-  <div id="statusPill">connecting…</div>
+  <div id="statusPill">offline</div>
 
   <div id="respawnBar">
     <div id="respawnLabel">respawning…</div>
     <div id="respawnTrack"><div id="respawnFill" style="width:100%"></div></div>
   </div>
 
-  <!-- join overlay -->
+  <!-- main menu overlay -->
   <div class="overlay" id="joinOverlay">
     <div class="ov-title">🐍 SNAKE</div>
-    <div class="ov-sub">Multiplayer · Everyone joins the same room</div>
+    <div class="ov-sub" style="margin-bottom: 8px;">P2P Multiplayer · No Server</div>
     <input id="nameInput" maxlength="12" placeholder="Your name…" spellcheck="false">
-    <button class="btn" id="joinBtn">▶ JOIN GAME</button>
-    <div class="ov-sub" style="font-size:0.68rem;color:#475569">Arrow keys / WASD to move</div>
+    
+    <div style="display:flex; flex-direction:column; gap:10px; width:220px; margin-top: 6px;">
+      <button class="btn" id="quickPlayBtn" style="padding:10px; background: linear-gradient(135deg, #34d399, #10b981);">QUICK PLAY (PUBLIC)</button>
+      <div style="display:flex; gap:10px;">
+        <button class="btn secondary" id="hostBtn" style="flex:1; padding:10px; font-size:0.8rem;">HOST PRV</button>
+        <button class="btn secondary" id="joinMenuBtn" style="flex:1; padding:10px; font-size:0.8rem;">JOIN PRV</button>
+      </div>
+    </div>
+    <div class="ov-sub" style="font-size:0.68rem;color:#475569;margin-top:8px;">Arrow keys / WASD to move</div>
+  </div>
+
+  <!-- join room overlay -->
+  <div class="overlay hidden" id="connectOverlay">
+    <div class="ov-title">JOIN GAME</div>
+    <div class="ov-sub" style="margin-bottom: 8px;">Enter the Host's Room Code</div>
+    <input id="roomInput" maxlength="10" placeholder="CODE" spellcheck="false" style="text-transform:uppercase;">
+    <div style="display:flex; gap:10px; width:220px; margin-top:10px;">
+      <button class="btn secondary" id="backToMenuBtn" style="flex:1; padding:10px;">BACK</button>
+      <button class="btn" id="joinRoomBtn" style="flex:1; padding:10px;">CONNECT</button>
+    </div>
   </div>
 
   <!-- waiting overlay -->
   <div class="overlay hidden" id="waitOverlay">
-    <div class="ov-title">WAITING…</div>
-    <div class="ov-sub" id="waitSub">You're in the room.<br>Game starts when someone clicks Start.</div>
-    <button class="btn" id="startBtn">▶ START GAME</button>
+    <div class="ov-title" id="waitTitle">WAITING…</div>
+    <div class="ov-sub" id="waitSub" style="user-select:text;">
+      Room Code:<br>
+      <strong id="roomCodeDisp" style="color:#fff; letter-spacing:2px; font-size:1.4rem; display:block; margin-top:6px;">...</strong>
+    </div>
+    <button class="btn hidden" id="startBtn">▶ START GAME</button>
     <div class="ov-sub" id="waitPlayers">1 player in room</div>
   </div>
 
@@ -231,30 +256,24 @@
   <button class="dpad-btn right" data-dir="right">▶</button>
   <button class="dpad-btn down"  data-dir="down">▼</button>
 </div>
-<div class="hint">Arrow keys / WASD · P = pause</div>
+<div class="hint">Arrow keys / WASD</div>
 
 <script>
 // ── Config ─────────────────────────────────────────────────
-const ROOM   = 'capdist-snake-room-001';
-const COLS   = 20, ROWS = 20, CS = 400, S = CS / COLS;
-const TICK   = 130;
+const COLS = 20, ROWS = 20, CS = 400, S = CS / COLS;
+const TICK = 220;
 const RESPAWN_MS = 3000;
 const COLORS = ['#a78bfa','#60a5fa','#f472b6','#34d399','#fbbf24','#f87171','#38bdf8','#c084fc'];
-const STALE_MS = 8000; // remove player if no heartbeat for 8s
-
-// ── Gun setup ──────────────────────────────────────────────
-const gun = Gun([
-  'https://gun-manhattan.herokuapp.com/gun',
-  'https://gunjs.herokuapp.com/gun',
-  'https://gun-us.herokuapp.com/gun'
-]);
-const room = gun.get(ROOM);
 
 // ── Local state ────────────────────────────────────────────
 const canvas = document.getElementById('c');
 const ctx    = canvas.getContext('2d');
 
-let myId    = 'p_' + Math.random().toString(36).slice(2, 9);
+let peer = null;
+let isHost = false;
+let connections = []; // For Host: array of DataConnections. For Client: array of one DataConnection (to host)
+
+let myId    = '';
 let myName  = '';
 let myColor = '';
 let myDir   = { x: 1, y: 0 };
@@ -262,25 +281,33 @@ let myNext  = { x: 1, y: 0 };
 let mySnake = [];
 let myScore = 0;
 let myAlive = false;
-let joined  = false;
 let gameRunning = false;
 
-let players = {};   // id → { name, color, snakeJSON, dir, score, alive, ts }
+let isQuickPlaySearch = false;
+let quickPlayTarget = 1;
+const MAX_QUICK_PLAY_ROOMS = 5;
+
+let players = {};   // id → { name, color, snake, dir, score, alive }
 let food    = { x: 5, y: 5 };
 let tickTimer   = null;
 let respawnTimer = null;
 let animId      = null;
 
 // ── UI refs ────────────────────────────────────────────────
-const joinOverlay  = document.getElementById('joinOverlay');
-const waitOverlay  = document.getElementById('waitOverlay');
-const deadOverlay  = document.getElementById('deadOverlay');
-const statusPill   = document.getElementById('statusPill');
-const waitPlayers  = document.getElementById('waitPlayers');
-const nameInput    = document.getElementById('nameInput');
-const respawnBar   = document.getElementById('respawnBar');
-const respawnFill  = document.getElementById('respawnFill');
-const deadMsg      = document.getElementById('deadMsg');
+const joinOverlay    = document.getElementById('joinOverlay');
+const connectOverlay = document.getElementById('connectOverlay');
+const waitOverlay    = document.getElementById('waitOverlay');
+const deadOverlay    = document.getElementById('deadOverlay');
+const statusPill     = document.getElementById('statusPill');
+const waitPlayers    = document.getElementById('waitPlayers');
+const nameInput      = document.getElementById('nameInput');
+const roomInput      = document.getElementById('roomInput');
+const roomCodeDisp   = document.getElementById('roomCodeDisp');
+const startBtn       = document.getElementById('startBtn');
+const waitTitle      = document.getElementById('waitTitle');
+const respawnBar     = document.getElementById('respawnBar');
+const respawnFill    = document.getElementById('respawnFill');
+const deadMsg        = document.getElementById('deadMsg');
 
 // ── Helpers ────────────────────────────────────────────────
 function randomName() {
@@ -292,6 +319,13 @@ function randomName() {
 function pickColor() {
   const used = Object.values(players).map(p => p.color);
   return COLORS.find(c => !used.includes(c)) || COLORS[Math.random()*COLORS.length|0];
+}
+
+function generateRoomCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let result = '';
+  for (let i = 0; i < 5; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+  return result;
 }
 
 function spawnSnake() {
@@ -308,78 +342,211 @@ function newFood(snakes) {
   return f;
 }
 
-// ── Publish my state to Gun ────────────────────────────────
-function publishMe() {
-  if (!joined) return;
-  room.get('players').get(myId).put({
-    name:      myName,
-    color:     myColor,
-    snakeJSON: JSON.stringify(mySnake),
-    dirX:      myDir.x,
-    dirY:      myDir.y,
-    score:     myScore,
-    alive:     myAlive ? 1 : 0,
-    ts:        Date.now()
+// ── Network Logic (PeerJS) ─────────────────────────────────
+
+function initPeer(id) {
+  peer = new Peer(id, {
+    debug: 2
+  });
+
+  peer.on('open', (id) => {
+    myId = id;
+    if (isHost) {
+      roomCodeDisp.textContent = isQuickPlaySearch ? 'PUBLIC' : id;
+      statusPill.textContent = '● HOSTING';
+      statusPill.className = 'waiting';
+      startBtn.classList.remove('hidden');
+      waitTitle.textContent = isQuickPlaySearch ? 'HOSTING PUBLIC ROOM' : 'HOSTING ROOM';
+      updateWaitUI();
+    } else {
+      if (isQuickPlaySearch) {
+        statusPill.textContent = '● SEARCHING';
+      } else {
+        statusPill.textContent = '● CONNECTED';
+        statusPill.className = 'waiting';
+        waitTitle.textContent = 'WAITING FOR HOST…';
+        roomCodeDisp.textContent = roomInput.value.toUpperCase();
+      }
+    }
+  });
+
+  peer.on('connection', (conn) => {
+    if (isHost) {
+      // Host receives a new connection from a client
+      if (connections.length >= 8) {
+          conn.on('open', () => {
+             conn.send({ type: 'full' });
+             setTimeout(() => conn.close(), 500);
+          });
+          return;
+      }
+
+      connections.push(conn);
+      setupConnection(conn);
+      
+      conn.on('open', () => {
+        // Send initial state to the new client
+        conn.send({
+          type: 'sync',
+          players: getCombinedPlayers(),
+          food: food,
+          running: gameRunning
+        });
+        updateWaitUI();
+      });
+      
+      conn.on('close', () => {
+        connections = connections.filter(c => c !== conn);
+        delete players[conn.peer];
+        broadcastSync();
+        updateWaitUI();
+      });
+    }
+  });
+
+  peer.on('error', (err) => {
+    console.error(err);
+    if (isQuickPlaySearch && err.type === 'peer-unavailable') {
+        console.log(`Public room CAP-PUB-${quickPlayTarget} not found. Hosting it.`);
+        isHost = true;
+        peer.destroy();
+        
+        setTimeout(() => {
+            initPeer(`CAP-PUB-${quickPlayTarget}`);
+        }, 500);
+        return;
+    }
+    
+    if (isQuickPlaySearch && err.type === 'unavailable-id') {
+        console.log(`Public room CAP-PUB-${quickPlayTarget} was just taken!`);
+        quickPlayTarget++;
+        if (quickPlayTarget > MAX_QUICK_PLAY_ROOMS) quickPlayTarget = 1;
+        isHost = false;
+        peer.destroy();
+        setTimeout(() => {
+            initPeer(null);
+            setTimeout(() => connectToHost(`CAP-PUB-${quickPlayTarget}`), 1000);
+        }, 500);
+        return;
+    }
+
+    alert("Connection error: " + err.type);
+    resetToMenu();
   });
 }
 
-function publishFood(f) {
-  room.get('food').put({ x: f.x, y: f.y, ts: Date.now() });
-}
-
-function publishGameState(running) {
-  room.get('meta').put({ running: running ? 1 : 0, ts: Date.now() });
-}
-
-// ── Subscribe to Gun ───────────────────────────────────────
-function subscribe() {
-  // other players
-  room.get('players').map().on((data, id) => {
-    if (!data || id === myId) return;
-    if (Date.now() - (data.ts || 0) > STALE_MS) { delete players[id]; return; }
-    players[id] = {
-      id,
-      name:  data.name  || '?',
-      color: data.color || '#fff',
-      snake: safeParseSnake(data.snakeJSON),
-      dir:   { x: data.dirX || 1, y: data.dirY || 0 },
-      score: data.score || 0,
-      alive: data.alive === 1,
-      ts:    data.ts || 0
-    };
-    updateWaitUI();
-  });
-
-  // food
-  room.get('food').on(data => {
-    if (data && data.x != null) food = { x: data.x, y: data.y };
-  });
-
-  // game meta
-  room.get('meta').on(data => {
-    if (!data) return;
-    if (data.running === 1 && !gameRunning) startGame();
+function setupConnection(conn) {
+  conn.on('data', (data) => {
+    if (isHost) {
+      // Host receives state from clients
+      if (data.type === 'state') {
+        players[data.id] = data.data;
+        // Broadcast the updated state to all clients
+        broadcastSync();
+      }
+    } else {
+      // Client receives messages from host
+      if (data.type === 'full') {
+          alert("This room is currently full.");
+          resetToMenu();
+          return;
+      }
+      if (data.type === 'sync') {
+        players = data.players;
+        delete players[myId]; // Don't overwrite my own state with delayed host state
+        food = data.food;
+        
+        if (data.running && !gameRunning) {
+          startGameLocally();
+        }
+        updateWaitUI();
+      } else if (data.type === 'start') {
+        startGameLocally();
+      } else if (data.type === 'food') {
+        food = data.food;
+      }
+    }
   });
 }
 
-function safeParseSnake(json) {
-  try { const s = JSON.parse(json); return Array.isArray(s) ? s : []; }
-  catch { return []; }
+function connectToHost(hostId) {
+  const conn = peer.connect(hostId, { reliable: true });
+  connections.push(conn);
+  setupConnection(conn);
+  
+  conn.on('open', () => {
+    if (isQuickPlaySearch) {
+        statusPill.textContent = '● CONNECTED';
+        statusPill.className = 'waiting';
+        waitTitle.textContent = 'WAITING FOR HOST…';
+    }
+    // Send my initial state to host
+    broadcastMyState();
+  });
+
+  conn.on('close', () => {
+    if (isQuickPlaySearch && !gameRunning) {
+        alert("Disconnected from public room.");
+        resetToMenu();
+    } else {
+        alert("Disconnected from host.");
+        resetToMenu();
+    }
+  });
 }
 
-// ── Heartbeat (keep presence alive) ───────────────────────
-setInterval(() => {
-  if (joined) publishMe();
-  // prune stale players
-  const now = Date.now();
-  Object.keys(players).forEach(id => {
-    if (now - (players[id].ts || 0) > STALE_MS) delete players[id];
+function getCombinedPlayers() {
+  const all = { ...players };
+  all[myId] = { name: myName, color: myColor, snake: mySnake, dir: myDir, score: myScore, alive: myAlive };
+  return all;
+}
+
+function broadcastSync() {
+  if (!isHost) return;
+  const syncData = {
+    type: 'sync',
+    players: getCombinedPlayers(),
+    food: food,
+    running: gameRunning
+  };
+  connections.forEach(conn => {
+    if (conn.open) conn.send(syncData);
   });
-  updateWaitUI();
-}, 2000);
+}
+
+function broadcastMyState() {
+  const myState = {
+    type: 'state',
+    id: myId,
+    data: { name: myName, color: myColor, snake: mySnake, dir: myDir, score: myScore, alive: myAlive }
+  };
+  if (isHost) {
+    broadcastSync(); // Host just syncs everything
+  } else {
+    // Client sends to host
+    connections.forEach(conn => {
+      if (conn.open) conn.send(myState);
+    });
+  }
+}
+
+function broadcastFood() {
+  if (!isHost) return;
+  connections.forEach(conn => {
+    if (conn.open) conn.send({ type: 'food', food: food });
+  });
+}
+
+function broadcastStart() {
+  if (!isHost) return;
+  connections.forEach(conn => {
+    if (conn.open) conn.send({ type: 'start' });
+  });
+}
 
 // ── Game tick (each player runs their own snake) ───────────
-function startGame() {
+
+function startGameLocally() {
   if (gameRunning) return;
   gameRunning = true;
   waitOverlay.classList.add('hidden');
@@ -392,13 +559,8 @@ function startGame() {
   myNext  = { x: 1, y: 0 };
   myAlive = true;
   myScore = 0;
-  publishMe();
-
-  // only first player seeds food
-  if (Object.keys(players).length === 0) {
-    food = newFood([mySnake]);
-    publishFood(food);
-  }
+  
+  broadcastMyState();
 
   tickTimer = setInterval(tick, TICK);
 }
@@ -409,35 +571,41 @@ function tick() {
 
   const head = { x: mySnake[0].x + myDir.x, y: mySnake[0].y + myDir.y };
 
-  // wall
-  if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS) { die(); return; }
+  // wall — wrap to opposite side
+  if (head.x < 0)      head.x = COLS - 1;
+  if (head.x >= COLS)  head.x = 0;
+  if (head.y < 0)      head.y = ROWS - 1;
+  if (head.y >= ROWS)  head.y = 0;
 
   // self
   if (mySnake.some(s => s.x === head.x && s.y === head.y)) { die(); return; }
 
   // other snakes
   const others = Object.values(players).filter(p => p.alive);
-  if (others.some(p => p.snake.some(s => s.x === head.x && s.y === head.y))) { die(); return; }
+  if (others.some(p => p.snake && p.snake.some(s => s.x === head.x && s.y === head.y))) { die(); return; }
 
   mySnake.unshift(head);
 
   if (head.x === food.x && head.y === food.y) {
     myScore++;
-    // whoever eats seeds new food
-    const allSnakes = [mySnake, ...others.map(p => p.snake)];
-    food = newFood(allSnakes);
-    publishFood(food);
+    
+    // Whoever eats, if they are host, they generate new food.
+    if (isHost) {
+       const allSnakes = [mySnake, ...others.map(p => p.snake).filter(Boolean)];
+       food = newFood(allSnakes);
+       broadcastFood();
+    }
   } else {
     mySnake.pop();
   }
 
-  publishMe();
+  broadcastMyState();
 }
 
 function die() {
   myAlive = false;
   mySnake = [];
-  publishMe();
+  broadcastMyState();
 
   deadMsg.textContent = `Score: ${myScore}`;
   deadOverlay.classList.remove('hidden');
@@ -462,7 +630,7 @@ function respawn() {
   myDir   = { x: 1, y: 0 };
   myNext  = { x: 1, y: 0 };
   myAlive = true;
-  publishMe();
+  broadcastMyState();
 }
 
 // ── Draw ───────────────────────────────────────────────────
@@ -507,21 +675,23 @@ function draw() {
 
     // name tag
     const head = p.snake[0];
-    ctx.fillStyle = p.color;
-    ctx.font = `bold ${S*0.52}px Segoe UI`;
-    ctx.textAlign = 'center';
-    ctx.fillText(p.name.slice(0, 10), head.x*S+S/2, head.y*S - 3);
+    if (head) {
+        ctx.fillStyle = p.color;
+        ctx.font = `bold ${S*0.52}px Segoe UI`;
+        ctx.textAlign = 'center';
+        ctx.fillText((p.name || '?').slice(0, 10), head.x*S+S/2, head.y*S - 3);
 
-    // eyes
-    const d = p.dir || { x:1, y:0 };
-    const perp = { x: -d.y, y: d.x };
-    const cx = head.x*S+S/2, cy = head.y*S+S/2;
-    ctx.fillStyle = '#0a0a0f';
-    [1, -1].forEach(side => {
-      ctx.beginPath();
-      ctx.arc(cx+d.x*S*0.22+perp.x*S*0.18*side, cy+d.y*S*0.22+perp.y*S*0.18*side, 2, 0, Math.PI*2);
-      ctx.fill();
-    });
+        // eyes
+        const d = p.dir || { x:1, y:0 };
+        const perp = { x: -d.y, y: d.x };
+        const cx = head.x*S+S/2, cy = head.y*S+S/2;
+        ctx.fillStyle = '#0a0a0f';
+        [1, -1].forEach(side => {
+        ctx.beginPath();
+        ctx.arc(cx+d.x*S*0.22+perp.x*S*0.18*side, cy+d.y*S*0.22+perp.y*S*0.18*side, 2, 0, Math.PI*2);
+        ctx.fill();
+        });
+    }
   });
 
   ctx.textAlign = 'left';
@@ -565,41 +735,117 @@ document.querySelectorAll('.dpad-btn').forEach(btn => {
   btn.addEventListener('touchstart', e => { e.preventDefault(); press(); }, { passive: false });
 });
 
-// ── Join flow ──────────────────────────────────────────────
+// ── UI Flow ────────────────────────────────────────────────
 nameInput.value = randomName();
 
 function updateWaitUI() {
   if (gameRunning) return;
-  const n = Object.keys(players).length + (joined ? 1 : 0);
+  const n = (isHost ? 1 : 1) + (isHost ? connections.length : Object.keys(players).length);
   waitPlayers.textContent = `${n} player${n !== 1 ? 's' : ''} in room`;
 }
 
-document.getElementById('joinBtn').addEventListener('click', () => {
+function resetToMenu() {
+    if (peer) {
+        peer.destroy();
+        peer = null;
+    }
+    gameRunning = false;
+    isQuickPlaySearch = false;
+    clearInterval(tickTimer);
+    connections = [];
+    players = {};
+    joinOverlay.classList.remove('hidden');
+    waitOverlay.classList.add('hidden');
+    connectOverlay.classList.add('hidden');
+    deadOverlay.classList.add('hidden');
+    statusPill.textContent = 'offline';
+    statusPill.className = '';
+}
+
+document.getElementById('quickPlayBtn').addEventListener('click', () => {
   myName  = nameInput.value.trim() || randomName();
   myColor = pickColor();
-  joined  = true;
+  isHost  = false;
+  isQuickPlaySearch = true;
+  quickPlayTarget = 1;
 
   joinOverlay.classList.add('hidden');
   waitOverlay.classList.remove('hidden');
-  statusPill.textContent = '● WAITING';
-  statusPill.className = 'waiting';
-
-  subscribe();
-  publishMe();
-  updateWaitUI();
+  waitTitle.textContent = 'FINDING GAME…';
+  roomCodeDisp.textContent = 'PUBLIC';
+  
+  // Initialize peer with random ID, then connect to host
+  initPeer(null); 
+  
+  setTimeout(() => {
+     if (peer && !peer.destroyed) {
+         connectToHost(`CAP-PUB-${quickPlayTarget}`);
+     }
+  }, 1000);
 });
 
-document.getElementById('startBtn').addEventListener('click', () => {
-  publishGameState(true);
-  startGame();
+document.getElementById('hostBtn').addEventListener('click', () => {
+  myName  = nameInput.value.trim() || randomName();
+  myColor = pickColor();
+  isHost  = true;
+  isQuickPlaySearch = false;
+
+  joinOverlay.classList.add('hidden');
+  waitOverlay.classList.remove('hidden');
+  
+  const hostId = 'CAP-' + generateRoomCode();
+  initPeer(hostId);
+});
+
+document.getElementById('joinMenuBtn').addEventListener('click', () => {
+  joinOverlay.classList.add('hidden');
+  connectOverlay.classList.remove('hidden');
+});
+
+document.getElementById('backToMenuBtn').addEventListener('click', () => {
+  connectOverlay.classList.add('hidden');
+  joinOverlay.classList.remove('hidden');
+});
+
+document.getElementById('joinRoomBtn').addEventListener('click', () => {
+  const code = roomInput.value.trim().toUpperCase();
+  if (!code) return;
+  
+  myName  = nameInput.value.trim() || randomName();
+  myColor = pickColor();
+  isHost  = false;
+  isQuickPlaySearch = false;
+
+  connectOverlay.classList.add('hidden');
+  waitOverlay.classList.remove('hidden');
+  
+  // Initialize peer with random ID, then connect to host
+  initPeer(null); 
+  
+  setTimeout(() => {
+     if (peer && !peer.destroyed) {
+         connectToHost(code.startsWith('CAP-') ? code : 'CAP-' + code);
+     }
+  }, 1000);
+});
+
+startBtn.addEventListener('click', () => {
+  if (isHost) {
+    // Generate initial food based on all connected players
+    const allSnakes = [spawnSnake()]; 
+    food = newFood(allSnakes);
+    gameRunning = true;
+    broadcastStart();
+    broadcastSync();
+    startGameLocally();
+  }
 });
 
 // ── Boot ───────────────────────────────────────────────────
-statusPill.textContent = 'ready';
 draw();
 
 window.addEventListener('beforeunload', () => {
-  if (joined) room.get('players').get(myId).put({ ts: 0 });
+  if (peer) peer.destroy();
 });
 </script>
 </body>
