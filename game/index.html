@@ -441,8 +441,11 @@ function setupConnection(conn) {
       // Host receives state from clients
       if (data.type === 'state') {
         players[data.id] = data.data;
-        // Broadcast the updated state to all clients
         broadcastSync();
+      } else if (data.type === 'ate') {
+        const allSnakes = Object.values(getCombinedPlayers()).filter(p => p.alive).map(p => p.snake).filter(Boolean);
+        food = newFood(allSnakes);
+        broadcastFood();
       }
     } else {
       // Client receives messages from host
@@ -588,12 +591,15 @@ function tick() {
 
   if (head.x === food.x && head.y === food.y) {
     myScore++;
-    
-    // Whoever eats, if they are host, they generate new food.
     if (isHost) {
-       const allSnakes = [mySnake, ...others.map(p => p.snake).filter(Boolean)];
-       food = newFood(allSnakes);
-       broadcastFood();
+      const allSnakes = [mySnake, ...others.map(p => p.snake).filter(Boolean)];
+      food = newFood(allSnakes);
+      broadcastFood();
+    } else {
+      // Client notifies host to generate new food
+      connections.forEach(conn => {
+        if (conn.open) conn.send({ type: 'ate', id: myId });
+      });
     }
   } else {
     mySnake.pop();
