@@ -346,7 +346,8 @@ function newFood(snakes) {
 
 function initPeer(id) {
   peer = new Peer(id, {
-    debug: 2
+    debug: 0,
+    config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
   });
 
   peer.on('open', (id) => {
@@ -371,74 +372,112 @@ function initPeer(id) {
   });
 
   peer.on('connection', (conn) => {
-    if (isHost) {
-      // Host receives a new connection from a client
-      if (connections.length >= 8) {
-          conn.on('open', () => {
-             conn.send({ type: 'full' });
-             setTimeout(() => conn.close(), 500);
-          });
-          return;
-      }
-
-      connections.push(conn);
-      setupConnection(conn);
-      
-      conn.on('open', () => {
-        // Send initial state to the new client
-        conn.send({
-          type: 'sync',
-          players: getCombinedPlayers(),
-          food: food,
-          running: gameRunning
-        });
-        updateWaitUI();
-      });
-      
-      conn.on('close', () => {
-        connections = connections.filter(c => c !== conn);
-        delete players[conn.peer];
-        broadcastSync();
-        updateWaitUI();
-      });
+    if (!isHost) return;
+    if (connections.length >= 8) {
+      conn.on('open', () => { conn.send({ type: 'full' }); setTimeout(() => conn.close(), 500); });
+      return;
     }
+    connections.push(conn);
+    setupConnection(conn);
+    conn.on('open', () => {
+      conn.send({ type: 'sync', players: getCombinedPlayers(), food, running: gameRunning });
+      if (!gameRunning) {
+        updateWaitUI();
+        if (isQuickPlaySearch) {
+          food = newFood([spawnSnake()]);
+          broadcastStart();
+          startGameLocally();
+          broadcastSync();
+        }
+      }
+    });
+    conn.on('close', () => {
+      connections = connections.filter(c => c !== conn);
+      delete players[conn.peer];
+      if (gameRunning) broadcastSync();
+      else updateWaitUI();
+    });
   });
 
   peer.on('error', (err) => {
-    console.error(err);
-    if (isQuickPlaySearch && err.type === 'peer-unavailable') {
-        console.log(`Public room CAP-PUB-${quickPlayTarget} not found. Hosting it.`);
-        isHost = true;
-        peer.destroy();
-        
-        setTimeout(() => {
-            initPeer(`CAP-PUB-${quickPlayTarget}`);
-        }, 500);
-        return;
+    if (!isQuickPlaySearch) {
+      console.error(err);
+      alert('Connection error: ' + err.type);
+      resetToMenu();
     }
-    
-    if (isQuickPlaySearch && err.type === 'unavailable-id') {
-        console.log(`Public room CAP-PUB-${quickPlayTarget} was just taken!`);
-        quickPlayTarget++;
-        if (quickPlayTarget > MAX_QUICK_PLAY_ROOMS) quickPlayTarget = 1;
+  });
+}
+
+function handleQuickPlayError(err) {
+  if (err.type === 'peer-unavailable') {
+    // No host found on this slot — become the host
+    isHost = true;
+    peer.off('error', handleQuickPlayError);
+    peer.on('error', (e) => { console.error(e); });
+    const hostId = `CAP-PUB-${quickPlayTarget}`;
+    // Re-register with the public room ID
+    peer.destroy();
+    peer = new Peer(hostId, {
+      debug: 0,
+      config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
+    });
+    peer.on('open', (id) => {
+      myId = id;
+      roomCodeDisp.textContent = 'PUBLIC';
+      statusPill.textContent = '● HOSTING';
+      statusPill.className = 'waiting';
+      waitTitle.textContent = 'HOSTING PUBLIC ROOM';
+      startBtn.classList.remove('hidden');
+      updateWaitUI();
+    });
+    peer.on('connection', (conn) => {
+      if (connections.length >= 8) {
+        conn.on('open', () => { conn.send({ type: 'full' }); setTimeout(() => conn.close(), 500); });
+        return;
+      }
+      connections.push(conn);
+      setupConnection(conn);
+      conn.on('open', () => {
+        conn.send({ type: 'sync', players: getCombinedPlayers(), food, running: gameRunning });
+        if (!gameRunning) {
+          updateWaitUI();
+          food = newFood([spawnSnake()]);
+          broadcastStart();
+          startGameLocally();
+          broadcastSync();
+        }
+      });
+      conn.on('close', () => {
+        connections = connections.filter(c => c !== conn);
+        delete players[conn.peer];
+        if (gameRunning) broadcastSync();
+        else updateWaitUI();
+      });
+    });
+    peer.on('error', (e) => {
+      if (e.type === 'unavailable-id') {
+        // Slot taken, try next
+        quickPlayTarget = (quickPlayTarget % MAX_QUICK_PLAY_ROOMS) + 1;
         isHost = false;
         peer.destroy();
-        setTimeout(() => {
-            initPeer(null);
-            setTimeout(() => connectToHost(`CAP-PUB-${quickPlayTarget}`), 1000);
-        }, 500);
-        return;
-    }
-
-    alert("Connection error: " + err.type);
-    resetToMenu();
-  });
+        peer = new Peer({
+          debug: 0,
+          config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
+        });
+        peer.on('open', (id) => { myId = id; connectToHost(`CAP-PUB-${quickPlayTarget}`); });
+        peer.on('error', handleQuickPlayError);
+      }
+    });
+    return;
+  }
+  console.error(err);
+  alert('Connection error: ' + err.type);
+  resetToMenu();
 }
 
 function setupConnection(conn) {
   conn.on('data', (data) => {
     if (isHost) {
-      // Host receives state from clients
       if (data.type === 'state') {
         players[data.id] = data.data;
         broadcastSync();
@@ -448,23 +487,15 @@ function setupConnection(conn) {
         broadcastFood();
       }
     } else {
-      // Client receives messages from host
-      if (data.type === 'full') {
-          alert("This room is currently full.");
-          resetToMenu();
-          return;
-      }
+      if (data.type === 'full') { alert('This room is full.'); resetToMenu(); return; }
       if (data.type === 'sync') {
         players = data.players;
-        delete players[myId]; // Don't overwrite my own state with delayed host state
+        delete players[myId];
         food = data.food;
-        
-        if (data.running && !gameRunning) {
-          startGameLocally();
-        }
-        updateWaitUI();
+        if (data.running && !gameRunning) startGameLocally();
+        else if (!gameRunning) updateWaitUI();
       } else if (data.type === 'start') {
-        startGameLocally();
+        if (!gameRunning) startGameLocally();
       } else if (data.type === 'food') {
         food = data.food;
       }
@@ -476,25 +507,16 @@ function connectToHost(hostId) {
   const conn = peer.connect(hostId, { reliable: true });
   connections.push(conn);
   setupConnection(conn);
-  
+
   conn.on('open', () => {
-    if (isQuickPlaySearch) {
-        statusPill.textContent = '● CONNECTED';
-        statusPill.className = 'waiting';
-        waitTitle.textContent = 'WAITING FOR HOST…';
-    }
-    // Send my initial state to host
+    statusPill.textContent = '● CONNECTED';
+    statusPill.className = 'waiting';
+    waitTitle.textContent = 'WAITING FOR HOST…';
     broadcastMyState();
   });
 
   conn.on('close', () => {
-    if (isQuickPlaySearch && !gameRunning) {
-        alert("Disconnected from public room.");
-        resetToMenu();
-    } else {
-        alert("Disconnected from host.");
-        resetToMenu();
-    }
+    if (!gameRunning) { alert('Disconnected from host.'); resetToMenu(); }
   });
 }
 
@@ -551,6 +573,7 @@ function broadcastStart() {
 function startGameLocally() {
   if (gameRunning) return;
   gameRunning = true;
+  clearInterval(tickTimer);
   waitOverlay.classList.add('hidden');
   deadOverlay.classList.add('hidden');
   statusPill.textContent = '● LIVE';
@@ -561,9 +584,8 @@ function startGameLocally() {
   myNext  = { x: 1, y: 0 };
   myAlive = true;
   myScore = 0;
-  
-  broadcastMyState();
 
+  broadcastMyState();
   tickTimer = setInterval(tick, TICK);
 }
 
@@ -590,9 +612,13 @@ function tick() {
 
   if (head.x === food.x && head.y === food.y) {
     myScore++;
-    const allSnakes = [mySnake, ...others.map(p => p.snake).filter(Boolean)];
-    food = newFood(allSnakes);
-    broadcastFood();
+    if (isHost) {
+      const allSnakes = [mySnake, ...Object.values(players).filter(p => p.alive).map(p => p.snake).filter(Boolean)];
+      food = newFood(allSnakes);
+      broadcastFood();
+    } else {
+      connections.forEach(conn => { if (conn.open) conn.send({ type: 'ate' }); });
+    }
   } else {
     mySnake.pop();
   }
@@ -771,15 +797,16 @@ document.getElementById('quickPlayBtn').addEventListener('click', () => {
   waitOverlay.classList.remove('hidden');
   waitTitle.textContent = 'FINDING GAME…';
   roomCodeDisp.textContent = 'PUBLIC';
-  
-  // Initialize peer with random ID, then connect to host
-  initPeer(null); 
-  
-  setTimeout(() => {
-     if (peer && !peer.destroyed) {
-         connectToHost(`CAP-PUB-${quickPlayTarget}`);
-     }
-  }, 1000);
+
+  peer = new Peer({
+    debug: 0,
+    config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
+  });
+  peer.on('open', (id) => {
+    myId = id;
+    connectToHost(`CAP-PUB-${quickPlayTarget}`);
+  });
+  peer.on('error', handleQuickPlayError);
 });
 
 document.getElementById('hostBtn').addEventListener('click', () => {
@@ -808,7 +835,7 @@ document.getElementById('backToMenuBtn').addEventListener('click', () => {
 document.getElementById('joinRoomBtn').addEventListener('click', () => {
   const code = roomInput.value.trim().toUpperCase();
   if (!code) return;
-  
+
   myName  = nameInput.value.trim() || randomName();
   myColor = pickColor();
   isHost  = false;
@@ -816,15 +843,11 @@ document.getElementById('joinRoomBtn').addEventListener('click', () => {
 
   connectOverlay.classList.add('hidden');
   waitOverlay.classList.remove('hidden');
-  
-  // Initialize peer with random ID, then connect to host
-  initPeer(null); 
-  
-  setTimeout(() => {
-     if (peer && !peer.destroyed) {
-         connectToHost(code.startsWith('CAP-') ? code : 'CAP-' + code);
-     }
-  }, 1000);
+
+  const fullCode = code.startsWith('CAP-') ? code : 'CAP-' + code;
+  peer = new Peer({ debug: 0, config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] } });
+  peer.on('open', (id) => { myId = id; connectToHost(fullCode); });
+  peer.on('error', (err) => { alert('Connection error: ' + err.type); resetToMenu(); });
 });
 
 startBtn.addEventListener('click', () => {
