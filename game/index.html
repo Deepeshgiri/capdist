@@ -185,6 +185,18 @@
       outline: none; width: 220px;
     }
     input:focus { border-color: #a78bfa; }
+
+    .color-swatches {
+      display: flex; gap: 7px; flex-wrap: wrap; justify-content: center;
+      width: 220px;
+    }
+    .swatch {
+      width: 22px; height: 22px; border-radius: 50%; cursor: pointer;
+      border: 2px solid transparent;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .swatch:hover { transform: scale(1.2); }
+    .swatch.selected { border-color: #fff; transform: scale(1.2); }
   </style>
 </head>
 <body>
@@ -210,7 +222,8 @@
     <div class="ov-title">🐍 SNAKE</div>
     <div class="ov-sub" style="margin-bottom: 8px;">P2P Multiplayer · No Server</div>
     <input id="nameInput" maxlength="12" placeholder="Your name…" spellcheck="false">
-    
+    <div class="color-swatches" id="colorSwatches"></div>
+
     <div style="display:flex; flex-direction:column; gap:10px; width:220px; margin-top: 6px;">
       <button class="btn" id="quickPlayBtn" style="padding:10px; background: linear-gradient(135deg, #34d399, #10b981);">QUICK PLAY (PUBLIC)</button>
       <div style="display:flex; gap:10px;">
@@ -263,7 +276,7 @@
 const COLS = 20, ROWS = 20, CS = 400, S = CS / COLS;
 const TICK = 220;
 const RESPAWN_MS = 3000;
-const COLORS = ['#a78bfa','#60a5fa','#f472b6','#34d399','#fbbf24','#f87171','#38bdf8','#c084fc'];
+const COLORS = ['#ff4d6d','#06d6a0','#ffd166','#118ab2','#ff9f1c','#8338ec','#3a86ff','#ff006e','#43aa8b','#f4d35e','#ee4266','#0ead69'];
 
 // ── Local state ────────────────────────────────────────────
 const canvas = document.getElementById('c');
@@ -762,6 +775,20 @@ document.querySelectorAll('.dpad-btn').forEach(btn => {
 // ── UI Flow ────────────────────────────────────────────────
 nameInput.value = randomName();
 
+// colour swatches
+let selectedColor = COLORS[0];
+COLORS.forEach((c, i) => {
+  const sw = document.createElement('div');
+  sw.className = 'swatch' + (i === 0 ? ' selected' : '');
+  sw.style.background = c;
+  sw.addEventListener('click', () => {
+    selectedColor = c;
+    document.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
+    sw.classList.add('selected');
+  });
+  document.getElementById('colorSwatches').appendChild(sw);
+});
+
 function updateWaitUI() {
   if (gameRunning) return;
   const n = (isHost ? 1 : 1) + (isHost ? connections.length : Object.keys(players).length);
@@ -788,7 +815,7 @@ function resetToMenu() {
 
 document.getElementById('quickPlayBtn').addEventListener('click', () => {
   myName  = nameInput.value.trim() || randomName();
-  myColor = pickColor();
+  myColor = selectedColor;
   isHost  = false;
   isQuickPlaySearch = true;
   quickPlayTarget = 1;
@@ -811,7 +838,7 @@ document.getElementById('quickPlayBtn').addEventListener('click', () => {
 
 document.getElementById('hostBtn').addEventListener('click', () => {
   myName  = nameInput.value.trim() || randomName();
-  myColor = pickColor();
+  myColor = selectedColor;
   isHost  = true;
   isQuickPlaySearch = false;
 
@@ -837,7 +864,7 @@ document.getElementById('joinRoomBtn').addEventListener('click', () => {
   if (!code) return;
 
   myName  = nameInput.value.trim() || randomName();
-  myColor = pickColor();
+  myColor = selectedColor;
   isHost  = false;
   isQuickPlaySearch = false;
 
