@@ -498,6 +498,10 @@ function setupConnection(conn) {
         const allSnakes = Object.values(getCombinedPlayers()).filter(p => p.alive).map(p => p.snake).filter(Boolean);
         food = newFood(allSnakes);
         broadcastFood();
+      } else if (data.type === 'killed') {
+        const k = data.killerId;
+        if (k === myId) { myScore += 5; broadcastSync(); }
+        else if (players[k]) { players[k].score += 5; broadcastSync(); }
       }
     } else {
       if (data.type === 'full') { alert('This room is full.'); resetToMenu(); return; }
@@ -618,8 +622,9 @@ function tick() {
   if (mySnake.some(s => s.x === head.x && s.y === head.y)) { die(); return; }
 
   // other snakes
-  const others = Object.values(players).filter(p => p.alive);
-  if (others.some(p => p.snake && p.snake.some(s => s.x === head.x && s.y === head.y))) { die(); return; }
+  const others = Object.entries(players).filter(([,p]) => p.alive);
+  const killer = others.find(([,p]) => p.snake && p.snake.some(s => s.x === head.x && s.y === head.y));
+  if (killer) { die(killer[0]); return; }
 
   mySnake.unshift(head);
 
@@ -639,10 +644,18 @@ function tick() {
   broadcastMyState();
 }
 
-function die() {
+function die(killerId = null) {
   myAlive = false;
   mySnake = [];
   broadcastMyState();
+
+  if (killerId) {
+    if (isHost) {
+      if (players[killerId]) { players[killerId].score += 5; broadcastSync(); }
+    } else {
+      connections.forEach(conn => { if (conn.open) conn.send({ type: 'killed', killerId }); });
+    }
+  }
 
   deadMsg.textContent = `Score: ${myScore}`;
   deadOverlay.classList.remove('hidden');
