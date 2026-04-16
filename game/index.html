@@ -70,8 +70,9 @@
     .canvas-wrap {
       position: relative;
       width: 100%;
-      max-width: 420px;
+      max-width: var(--canvas-max, 420px);
       aspect-ratio: 1;
+      transition: max-width 0.4s ease;
     }
     canvas {
       width: 100%; height: 100%;
@@ -197,6 +198,93 @@
     }
     .swatch:hover { transform: scale(1.2); }
     .swatch.selected { border-color: #fff; transform: scale(1.2); }
+
+    #chatBubble {
+      position: fixed; bottom: 20px; right: 20px;
+      width: 48px; height: 48px; border-radius: 50%;
+      background: linear-gradient(135deg, #a78bfa, #60a5fa);
+      box-shadow: 0 0 20px rgba(167,139,250,0.5);
+      border: none; cursor: pointer; font-size: 1.3rem;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100;
+      transition: transform 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #chatBubble:hover { transform: scale(1.1); }
+    #chatBubble .unread {
+      position: absolute; top: -3px; right: -3px;
+      background: #ff4d6d; color: #fff;
+      font-size: 0.6rem; font-weight: 700;
+      width: 16px; height: 16px; border-radius: 50%;
+      display: none; align-items: center; justify-content: center;
+    }
+    #chatBubble .unread.show { display: flex; }
+    #chatDrawer {
+      position: fixed; bottom: 78px; right: 20px;
+      width: min(340px, calc(100vw - 40px));
+      background: #0f0f1a;
+      border: 1px solid rgba(167,139,250,0.3);
+      border-radius: 16px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+      z-index: 99;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      transform: scale(0.85) translateY(20px);
+      transform-origin: bottom right;
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+    #chatDrawer.open {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+      pointer-events: all;
+    }
+    #chatDrawerHeader {
+      padding: 10px 14px;
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 2px;
+      color: #a78bfa;
+      border-bottom: 1px solid rgba(167,139,250,0.15);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    #chatLog {
+      height: 160px; overflow-y: auto;
+      padding: 10px 12px;
+      display: flex; flex-direction: column; gap: 5px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(167,139,250,0.3) transparent;
+    }
+    .chat-msg { font-size: 0.75rem; line-height: 1.45; word-break: break-word; }
+    .chat-name { font-weight: 700; margin-right: 4px; }
+    #emojiPicker {
+      display: none; flex-wrap: wrap; gap: 3px;
+      padding: 8px 10px;
+      border-top: 1px solid rgba(167,139,250,0.15);
+      background: rgba(0,0,0,0.3);
+    }
+    #emojiPicker.open { display: flex; }
+    .ep-emoji {
+      font-size: 1.15rem; cursor: pointer; padding: 3px;
+      border-radius: 4px; transition: background 0.1s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .ep-emoji:hover { background: rgba(167,139,250,0.2); }
+    #chatInputRow {
+      display: flex;
+      border-top: 1px solid rgba(167,139,250,0.15);
+    }
+    #chatInput {
+      flex: 1; width: auto; background: transparent; border: none;
+      border-radius: 0; font-size: 0.82rem; padding: 9px 12px;
+      letter-spacing: 0; text-align: left; color: #fff; outline: none;
+    }
+    #emojiBtn, #chatSendBtn {
+      background: none; border: none; cursor: pointer; color: #a78bfa;
+      border-left: 1px solid rgba(167,139,250,0.15);
+      -webkit-tap-highlight-color: transparent;
+    }
+    #emojiBtn { font-size: 1.1rem; padding: 0 10px; }
+    #chatSendBtn { font-size: 0.72rem; font-weight: 700; padding: 0 12px; letter-spacing: 1px; }
   </style>
 </head>
 <body>
@@ -258,7 +346,7 @@
 
   <!-- dead overlay -->
   <div class="overlay hidden" id="deadOverlay">
-    <div class="ov-title">💀 YOU DIED</div>
+    <div class="ov-title" id="deadTitle">💀 YOU DIED</div>
     <div class="ov-sub" id="deadMsg"></div>
   </div>
 </div>
@@ -271,10 +359,36 @@
 </div>
 <div class="hint">Arrow keys / WASD</div>
 
+<!-- floating chat bubble -->
+<button id="chatBubble">
+  💬
+  <span class="unread" id="unreadBadge"></span>
+</button>
+
+<!-- chat drawer -->
+<div id="chatDrawer">
+  <div id="chatDrawerHeader">
+    <span>💬 CHAT</span>
+    <span id="chatCloseBtn" style="cursor:pointer;opacity:0.5;font-size:1rem;">✕</span>
+  </div>
+  <div id="chatLog"></div>
+  <div id="emojiPicker"></div>
+  <div id="chatInputRow">
+    <input id="chatInput" maxlength="80" placeholder="Say something…" spellcheck="false" autocomplete="off">
+    <button id="emojiBtn">😊</button>
+    <button id="chatSendBtn">SEND</button>
+  </div>
+</div>
+
 <script>
 // ── Config ─────────────────────────────────────────────────
-const COLS = 20, ROWS = 20, CS = 400, S = CS / COLS;
-const TICK = 220;
+const CS = 400;
+const BASE_GRID = 20;   // grid at 1 player
+const GRID_STEP = 2;    // extra cells per additional player
+const MAX_GRID = 34;    // cap
+let COLS = BASE_GRID, ROWS = BASE_GRID;
+let S = CS / COLS;
+const TICK = 320;
 const RESPAWN_MS = 3000;
 const COLORS = ['#ff4d6d','#06d6a0','#ffd166','#118ab2','#ff9f1c','#8338ec','#3a86ff','#ff006e','#43aa8b','#f4d35e','#ee4266','#0ead69'];
 
@@ -341,6 +455,22 @@ function generateRoomCode() {
   return result;
 }
 
+function resizeGrid(playerCount) {
+  const extra = Math.min(playerCount - 1, (MAX_GRID - BASE_GRID) / GRID_STEP) * GRID_STEP;
+  COLS = BASE_GRID + extra;
+  ROWS = BASE_GRID + extra;
+  S = CS / COLS;
+  // grow canvas-wrap max-width proportionally so cells don't get too tiny
+  const maxW = 420 + extra * 8;
+  document.querySelector('.canvas-wrap').style.setProperty('--canvas-max', maxW + 'px');
+  document.querySelector('.header').style.maxWidth = maxW + 'px';
+  document.getElementById('scoreboard').style.maxWidth = maxW + 'px';
+}
+
+function getPlayerCount() {
+  return 1 + (isHost ? connections.length : Object.keys(players).length);
+}
+
 function spawnSnake() {
   const x = 3 + Math.floor(Math.random() * (COLS - 6));
   const y = 3 + Math.floor(Math.random() * (ROWS - 6));
@@ -393,7 +523,8 @@ function initPeer(id) {
     connections.push(conn);
     setupConnection(conn);
     conn.on('open', () => {
-      conn.send({ type: 'sync', players: getCombinedPlayers(), food, running: gameRunning });
+      resizeGrid(1 + connections.length);
+      conn.send({ type: 'sync', players: getCombinedPlayers(), food, running: gameRunning, cols: COLS });
       if (!gameRunning) {
         updateWaitUI();
         if (isQuickPlaySearch) {
@@ -407,6 +538,7 @@ function initPeer(id) {
     conn.on('close', () => {
       connections = connections.filter(c => c !== conn);
       delete players[conn.peer];
+      resizeGrid(1 + connections.length);
       if (gameRunning) broadcastSync();
       else updateWaitUI();
     });
@@ -451,7 +583,8 @@ function handleQuickPlayError(err) {
       connections.push(conn);
       setupConnection(conn);
       conn.on('open', () => {
-        conn.send({ type: 'sync', players: getCombinedPlayers(), food, running: gameRunning });
+        resizeGrid(1 + connections.length);
+        conn.send({ type: 'sync', players: getCombinedPlayers(), food, running: gameRunning, cols: COLS });
         if (!gameRunning) {
           updateWaitUI();
           food = newFood([spawnSnake()]);
@@ -463,6 +596,7 @@ function handleQuickPlayError(err) {
       conn.on('close', () => {
         connections = connections.filter(c => c !== conn);
         delete players[conn.peer];
+        resizeGrid(1 + connections.length);
         if (gameRunning) broadcastSync();
         else updateWaitUI();
       });
@@ -491,24 +625,38 @@ function handleQuickPlayError(err) {
 function setupConnection(conn) {
   conn.on('data', (data) => {
     if (isHost) {
+      if (data.type === 'chat') {
+        addChatMsg(data.name, data.color, data.text);
+        connections.forEach(c => { if (c.open && c !== conn) c.send(data); });
+        return;
+      }
       if (data.type === 'state') {
+        // record last known head before updating
+        if (players[data.id] && players[data.id].snake && players[data.id].snake.length > 0)
+          lastHead[data.id] = players[data.id].snake[0];
         players[data.id] = data.data;
+        checkKillsOnTick();
         broadcastSync();
       } else if (data.type === 'ate') {
         const allSnakes = Object.values(getCombinedPlayers()).filter(p => p.alive).map(p => p.snake).filter(Boolean);
         food = newFood(allSnakes);
         broadcastFood();
-      } else if (data.type === 'killed') {
-        const k = data.killerId;
-        if (k === myId) { myScore += 5; broadcastSync(); }
-        else if (players[k]) { players[k].score += 5; broadcastSync(); }
       }
     } else {
       if (data.type === 'full') { alert('This room is full.'); resetToMenu(); return; }
+      if (data.type === 'chat') { addChatMsg(data.name, data.color, data.text); return; }
       if (data.type === 'sync') {
         players = data.players;
         delete players[myId];
         food = data.food;
+        if (data.cols && data.cols !== COLS) {
+          COLS = data.cols; ROWS = data.cols; S = CS / COLS;
+          const extra = COLS - BASE_GRID;
+          const maxW = 420 + extra * 8;
+          document.querySelector('.canvas-wrap').style.setProperty('--canvas-max', maxW + 'px');
+          document.querySelector('.header').style.maxWidth = maxW + 'px';
+          document.getElementById('scoreboard').style.maxWidth = maxW + 'px';
+        }
         if (data.running && !gameRunning) startGameLocally();
         else if (!gameRunning) updateWaitUI();
       } else if (data.type === 'start') {
@@ -549,10 +697,33 @@ function broadcastSync() {
     type: 'sync',
     players: getCombinedPlayers(),
     food: food,
-    running: gameRunning
+    running: gameRunning,
+    cols: COLS
   };
   connections.forEach(conn => {
     if (conn.open) conn.send(syncData);
+  });
+}
+
+const lastHead = {};
+const prevAlive = {};
+
+function checkKillsOnTick() {
+  const all = getCombinedPlayers();
+  Object.entries(all).forEach(([vid, victim]) => {
+    if (prevAlive[vid] && !victim.alive) {
+      const lh = lastHead[vid];
+      if (lh) {
+        Object.entries(all).forEach(([kid, killer]) => {
+          if (kid === vid || !killer.alive || !killer.snake) return;
+          if (killer.snake.some(s => s.x === lh.x && s.y === lh.y)) {
+            if (kid === myId) myScore += 5;
+            else if (players[kid]) players[kid].score += 5;
+          }
+        });
+      }
+    }
+    prevAlive[vid] = victim.alive;
   });
 }
 
@@ -563,12 +734,9 @@ function broadcastMyState() {
     data: { name: myName, color: myColor, snake: mySnake, dir: myDir, score: myScore, alive: myAlive }
   };
   if (isHost) {
-    broadcastSync(); // Host just syncs everything
+    broadcastSync();
   } else {
-    // Client sends to host
-    connections.forEach(conn => {
-      if (conn.open) conn.send(myState);
-    });
+    connections.forEach(conn => { if (conn.open) conn.send(myState); });
   }
 }
 
@@ -618,13 +786,16 @@ function tick() {
   if (head.y < 0)      head.y = ROWS - 1;
   if (head.y >= ROWS)  head.y = 0;
 
+  // track host's last head for kill detection
+  if (isHost) lastHead[myId] = mySnake[0];
+
   // self
   if (mySnake.some(s => s.x === head.x && s.y === head.y)) { die(); return; }
 
   // other snakes
   const others = Object.entries(players).filter(([,p]) => p.alive);
-  const killer = others.find(([,p]) => p.snake && p.snake.some(s => s.x === head.x && s.y === head.y));
-  if (killer) { die(killer[0]); return; }
+  const killerEntry = others.find(([,p]) => p.snake && p.snake.some(s => s.x === head.x && s.y === head.y));
+  if (killerEntry) { die(killerEntry[1].name); return; }
 
   mySnake.unshift(head);
 
@@ -644,19 +815,15 @@ function tick() {
   broadcastMyState();
 }
 
-function die(killerId = null) {
+const deadTitle = document.getElementById('deadTitle');
+
+function die(killerName = null) {
   myAlive = false;
   mySnake = [];
+  if (isHost) checkKillsOnTick();
   broadcastMyState();
 
-  if (killerId) {
-    if (isHost) {
-      if (players[killerId]) { players[killerId].score += 5; broadcastSync(); }
-    } else {
-      connections.forEach(conn => { if (conn.open) conn.send({ type: 'killed', killerId }); });
-    }
-  }
-
+  deadTitle.textContent = killerName ? `☠️ KILLED BY ${killerName.toUpperCase()}` : '💀 YOU DIED';
   deadMsg.textContent = `Score: ${myScore}`;
   deadOverlay.classList.remove('hidden');
   respawnBar.classList.add('show');
@@ -892,8 +1059,8 @@ document.getElementById('joinRoomBtn').addEventListener('click', () => {
 
 startBtn.addEventListener('click', () => {
   if (isHost) {
-    // Generate initial food based on all connected players
-    const allSnakes = [spawnSnake()]; 
+    resizeGrid(1 + connections.length);
+    const allSnakes = [spawnSnake()];
     food = newFood(allSnakes);
     gameRunning = true;
     broadcastStart();
@@ -901,6 +1068,67 @@ startBtn.addEventListener('click', () => {
     startGameLocally();
   }
 });
+
+// ── Chat ─────────────────────────────────────────────────
+const chatLog     = document.getElementById('chatLog');
+const chatInput   = document.getElementById('chatInput');
+const emojiPicker = document.getElementById('emojiPicker');
+const chatDrawer  = document.getElementById('chatDrawer');
+const unreadBadge = document.getElementById('unreadBadge');
+let unreadCount = 0;
+let drawerOpen  = false;
+
+const EMOJIS = ['😂','😍','🔥','💀','👑','🐍','😎','🤣','😭','💪','🎉','👀','😡','🥶','🤯','💯','👏','🫡','🤝','⚡','❤️','💥','🏆','😈','🙏'];
+
+EMOJIS.forEach(e => {
+  const btn = document.createElement('span');
+  btn.className = 'ep-emoji';
+  btn.textContent = e;
+  btn.addEventListener('click', () => { chatInput.value += e; chatInput.focus(); });
+  emojiPicker.appendChild(btn);
+});
+
+function toggleDrawer(open) {
+  drawerOpen = open;
+  chatDrawer.classList.toggle('open', open);
+  if (open) {
+    unreadCount = 0;
+    unreadBadge.textContent = '';
+    unreadBadge.classList.remove('show');
+    chatLog.scrollTop = chatLog.scrollHeight;
+    setTimeout(() => chatInput.focus(), 200);
+  }
+}
+
+document.getElementById('chatBubble').addEventListener('click', () => toggleDrawer(!drawerOpen));
+document.getElementById('chatCloseBtn').addEventListener('click', () => toggleDrawer(false));
+document.getElementById('emojiBtn').addEventListener('click', () => emojiPicker.classList.toggle('open'));
+
+function addChatMsg(name, color, text) {
+  const div = document.createElement('div');
+  div.className = 'chat-msg';
+  div.innerHTML = `<span class="chat-name" style="color:${color}">${name.slice(0,12)}</span><span>${text.slice(0,80)}</span>`;
+  chatLog.appendChild(div);
+  chatLog.scrollTop = chatLog.scrollHeight;
+  if (!drawerOpen) {
+    unreadCount++;
+    unreadBadge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+    unreadBadge.classList.add('show');
+  }
+}
+
+function sendChat() {
+  const text = chatInput.value.trim();
+  if (!text || !myName) return;
+  chatInput.value = '';
+  emojiPicker.classList.remove('open');
+  addChatMsg(myName, myColor, text);
+  const msg = { type: 'chat', name: myName, color: myColor, text };
+  connections.forEach(conn => { if (conn.open) conn.send(msg); });
+}
+
+document.getElementById('chatSendBtn').addEventListener('click', sendChat);
+chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); sendChat(); } });
 
 // ── Boot ───────────────────────────────────────────────────
 draw();
