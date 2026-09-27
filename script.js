@@ -181,11 +181,12 @@ async function fetchLanyardData() {
     try {
         const data = await fetch(`https://api.lanyard.rest/v1/users/${DISCORD_ID}`).then(r => r.json());
         if (!data.success) { applyPresenceToSlides(null); return; }
-
+console.log(data)
         const user = data.data.discord_user;
         const status = data.data.discord_status;
         const avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=256`;
         const displayName = user.display_name || user.global_name;
+        const decoration = data.data
         const statusMap = {
             online: { text: 'Online', color: '#43b581' },
             idle:   { text: 'Idle',   color: '#faa61a' },
